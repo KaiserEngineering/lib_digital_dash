@@ -49,6 +49,9 @@ static volatile uint32_t app_flags = 0;
 /* Current state of the Digital Dash */
 static volatile DIGITALDASH_OPERATING_STATE state = DD_OP_OFF;
 
+/* Current temperature of the Host */
+static volatile uint8_t digitaldash_active_cooling = 0x00;
+
 /* TODO */
 PID_DATA engine_rpm_req = { .pid = 0x0C, .mode = 0x01, .pid_unit = 0 };
 PTR_PID_DATA engine_rpm;
@@ -84,7 +87,7 @@ static volatile uint32_t digitaldash_app_wtchdg = 0xFFFFFFFF;
 static volatile uint32_t digitaldash_bklt_wtchdg = 0xFFFFFFFF;
 
 /* Number of packets before enabling the LCD backlight */
-#define KE_UART_THRESHOLD 20
+#define KE_UART_THRESHOLD 40
 
 /* Number of packets rx'd from the host */
 static uint32_t ke_uart_count = 0;
@@ -260,7 +263,7 @@ void DigitalDash_Add_UART_byte( uint8_t byte )
         Refresh_LCD();
     #endif
 
-    if( state == DD_OP_STREAM )
+    if( num_pids > 0x00 )
     	ke_uart_count++;
 
 	#ifdef LIB_KE_PROTOCOL_H_
@@ -280,6 +283,11 @@ void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data )
     CAN_Decode_Add_Packet( &decode, id, data );
 	#endif
 }
+
+/* Callback to request active cooling, right now this is configured *
+ * as a pass-through callback to main. But, logic can be added in   *
+ * the future if desired.                                           */
+void active_cooling( uint8_t level ) { fan( level ); }
 
 DIGITALDASH_INIT_STATUS DigitalDash_Config_Null_Check( void )
 {
@@ -370,6 +378,7 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     /* lib_ke_protocol initialization */
     rasp_pi.init.transmit = ke_tx;                                  /* Function call to transmit UART data to the host */
     rasp_pi.init.req_pid = &DigitalDash_Add_PID_To_Stream;          /* Function call to request a PID */
+    rasp_pi.init.cooling = &active_cooling;
     rasp_pi.init.firmware_version_major  = FIRMWARE_VERSION_MAJOR;  /* Firmware version */
     rasp_pi.init.firmware_version_minor  = FIRMWARE_VERSION_MINOR;  /* Firmware version */
     rasp_pi.init.firmware_version_hotfix = FIRMWARE_VERSION_HOTFIX; /* Firmware version */
