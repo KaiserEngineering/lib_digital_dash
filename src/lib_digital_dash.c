@@ -52,10 +52,6 @@ static volatile DIGITALDASH_OPERATING_STATE state = DD_OP_OFF;
 /* Current temperature of the Host */
 static volatile uint8_t digitaldash_active_cooling = 0x00;
 
-/* TODO */
-PID_DATA engine_rpm_req = { .pid = 0x0C, .mode = 0x01, .pid_unit = 0 };
-PTR_PID_DATA engine_rpm;
-
 #ifdef LIB_KE_PROTOCOL_H_
 /* Declare a KE packet manager */
 static KE_PACKET_MANAGER rasp_pi;
@@ -70,6 +66,10 @@ static OBDII_PACKET_MANAGER obdii;
 /* Declare a CAN Bus decode packet manager */
 static CAN_DECODE_PACKET_MANAGER decode;
 #endif
+
+/* Configure the Digital Dash to sync the backlight with the vehicle's lighting */
+static PID_DATA gauge_brightness_req = { .pid = DECODE_GAUGE_BRIGHTNESS, .mode = DECODE, .pid_unit = PID_UNITS_PERCENT };
+static PTR_PID_DATA gauge_brightness;
 
 /* Current LCD backlight brightness */
 static uint8_t Brightness = 0;
@@ -113,7 +113,7 @@ static void DigitalDash_Reset_PID_Stream( void )
 	for( uint8_t index = 0; index < DD_MAX_PIDS; index++ )
 	{
 		stream[index].pid = 0x00;
-		stream[index].pid_unit = PID_UNITS_RESERVED;
+		stream[index].pid_unit = PID_UNITS_NOT_APPLICABLE;
 		stream[index].acquisition_type = PID_UNASSIGNED;
 		stream[index].pid_value = 0;
 		stream[index].timestamp = 0;
@@ -209,6 +209,9 @@ static void Update_LCD_Brightness( uint8_t value )
     {
         /* Update the brightness */
         Brightness = value;
+
+        /* The brightness has been set */
+        Set_Brightness = value;
 
         /* Call the HAL function to update the brightness */
         set_backlight( Brightness );
@@ -400,8 +403,8 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     decode.filter = filter;
     CAN_Decode_Initialize(&decode);
 
-    /* Always monitor Engine RPM */
-    engine_rpm = DigitalDash_Add_PID_To_Stream( &engine_rpm_req );
+    /* Start obtaining the gauge brightness */
+    gauge_brightness = DigitalDash_Add_PID_To_Stream( &gauge_brightness_req );
 
     /* Set the initialized flag */
     update_app_flag( DD_FLG_INIT, DD_INITIALIZED );
@@ -487,6 +490,8 @@ DIGITALDASH_STATUS digitaldash_service( void )
         	ke_uart_count = 0;
 
             Update_LCD_Brightness(0);
+        } else {
+            Update_LCD_Brightness( (uint8_t)gauge_brightness->pid_value );
         }
 		#endif
 
