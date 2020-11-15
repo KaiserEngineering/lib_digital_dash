@@ -114,6 +114,7 @@ static void DigitalDash_Reset_PID_Stream( void )
 	{
 		stream[index].pid = 0x00;
 		stream[index].pid_unit = PID_UNITS_NOT_APPLICABLE;
+		stream[index].base_unit = PID_UNITS_NOT_APPLICABLE;
 		stream[index].acquisition_type = PID_UNASSIGNED;
 		stream[index].pid_value = 0;
 		stream[index].timestamp = 0;
@@ -133,14 +134,14 @@ static PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 {
 	/* Declare a NULL pointer */
 	PTR_PID_DATA ptr = NULL;
+
 	/* Iterate through every currently streamed PID and check if the *
 	 * PID is being streamed                                         */
 	for( uint8_t i = 0; i <= num_pids; i++ )
 	{
 		/* If so, return the pointer */
 		if( stream[i].pid == pid->pid  &&
-				stream[i].mode == pid->mode &&
-				stream[i].pid_unit == pid->pid_unit )
+				stream[i].mode == pid->mode )
 		{
 			/* Increment the number of devices */
 			stream[i].devices++;
