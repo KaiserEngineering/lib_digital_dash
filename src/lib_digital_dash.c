@@ -68,7 +68,7 @@ static CAN_DECODE_PACKET_MANAGER decode;
 #endif
 
 /* Configure the Digital Dash to sync the backlight with the vehicle's lighting */
-static PID_DATA gauge_brightness_req = { .pid = DECODE_GAUGE_BRIGHTNESS, .mode = DECODE, .pid_unit = PID_UNITS_PERCENT };
+static PID_DATA gauge_brightness_req = { .pid = DECODE_GAUGE_BRIGHTNESS, .mode = DECODE, .pid_unit = PID_UNITS_PERCENT, .pid_value = 100 };
 static PTR_PID_DATA gauge_brightness;
 
 /* Current LCD backlight brightness */
