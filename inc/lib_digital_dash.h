@@ -82,7 +82,11 @@ typedef enum _ecu_comm {
 #include "lib_ke_protocol.h"
 #include "lib_obdii.h"
 #include "lib_unit_conversion.h"
+
+#ifdef FORD_FOCUS_STRS_2013_2018
 #include "lib_CAN_bus_decode.h"
+#endif
+
 #include "lib_pid.h"
 
 #define null 0
