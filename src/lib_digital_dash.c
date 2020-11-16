@@ -393,6 +393,7 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     if( KE_Initialize( &rasp_pi ) != KE_OK )
         return DIGITALDASH_INIT_KE_INIT_ERROR;
 
+    #ifdef LIB_OBDII_H_
     /* lib_obdii initialization */
     obdii.init.transmit       = ecu_tx;               /* Function call to transmit OBDII data to the vehicle */
     obdii.init.timeout        = ECU_TIMEOUT;          /* Time(ms) before lib_obdii will retry a transmission */
@@ -401,10 +402,13 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
 
     /* Initialize the OBDII library */
     OBDII_Initialize( &obdii );
+    #endif
 
+    #ifdef USE_LIB_CAN_BUS_DECODE
     /* lib_can_bus_decode initialization */
     decode.filter = filter;
     CAN_Decode_Initialize(&decode);
+    #endif
 
     #ifdef DECODE_GAUGE_BRIGHTNESS_SUPPORTED
     /* Start obtaining the gauge brightness */
@@ -507,8 +511,10 @@ DIGITALDASH_STATUS digitaldash_service( void )
         /* Service the KE protocol manager */
         KE_Service( &rasp_pi );
 
+        #ifdef USE_LIB_OBDII
         /* Service the OBDII protocol manager */
         OBDII_Service( &obdii );
+        #endif
 
         return DIGITALDASH_OK;
     }
@@ -533,5 +539,7 @@ void digitaldash_tick( void )
 
     KE_tick();
 
+    #ifdef USE_LIB_OBDII
     OBDII_tick();
+    #endif
 }

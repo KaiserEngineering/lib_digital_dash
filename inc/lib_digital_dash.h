@@ -7,6 +7,9 @@
 
 #ifndef DIGITAL_DASH_CONFIG
 
+#define USE_LIB_OBDII
+#define USE_LIB_CAN_BUS_DECODE
+
 /********************************************************************
 * Hardware configuration                                            *
 ********************************************************************/
@@ -80,11 +83,16 @@ typedef enum _ecu_comm {
 #endif
 
 #include "lib_ke_protocol.h"
-#include "lib_obdii.h"
 #include "lib_unit_conversion.h"
 
+#ifdef USE_LIB_OBDII
+#include "lib_obdii.h"
+#endif
+
+#ifdef USE_LIB_CAN_BUS_DECODE
 #ifdef FORD_FOCUS_STRS_2013_2018
 #include "lib_CAN_bus_decode.h"
+#endif
 #endif
 
 #include "lib_pid.h"
