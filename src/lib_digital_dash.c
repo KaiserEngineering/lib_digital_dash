@@ -68,8 +68,10 @@ static CAN_DECODE_PACKET_MANAGER decode;
 #endif
 
 /* Configure the Digital Dash to sync the backlight with the vehicle's lighting */
+#ifdef DECODE_GAUGE_BRIGHTNESS_SUPPORTED
 static PID_DATA gauge_brightness_req = { .pid = DECODE_GAUGE_BRIGHTNESS, .mode = DECODE, .pid_unit = PID_UNITS_PERCENT, .pid_value = 100 };
 static PTR_PID_DATA gauge_brightness;
+#endif
 
 /* Current LCD backlight brightness */
 static uint8_t Brightness = 0;
@@ -404,8 +406,10 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     decode.filter = filter;
     CAN_Decode_Initialize(&decode);
 
+    #ifdef DECODE_GAUGE_BRIGHTNESS_SUPPORTED
     /* Start obtaining the gauge brightness */
     gauge_brightness = DigitalDash_Add_PID_To_Stream( &gauge_brightness_req );
+    #endif
 
     /* Set the initialized flag */
     update_app_flag( DD_FLG_INIT, DD_INITIALIZED );
@@ -492,7 +496,11 @@ DIGITALDASH_STATUS digitaldash_service( void )
 
             Update_LCD_Brightness(0);
         } else {
+            #ifdef DECODE_GAUGE_BRIGHTNESS_SUPPORTED
             Update_LCD_Brightness( (uint8_t)gauge_brightness->pid_value );
+            #else
+            Update_LCD_Brightness( LCD_MAX_BRIGHTNESS );
+            #endif
         }
 		#endif
 
