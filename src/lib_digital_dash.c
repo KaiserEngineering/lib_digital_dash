@@ -106,6 +106,13 @@ DD_CAN_FILTER filter                      = null;
 
 DIGITALDASH_INIT_STATUS DigitalDash_Config_Null_Check( void );
 
+static void DigitalDash_Reset_PID( PTR_PID_DATA pid )
+{
+    pid->acquisition_type = PID_UNASSIGNED;
+    pid->pid_value        = 0;
+    pid->timestamp        = 0;
+}
+
 /* Clear ALL of the PIDs, this should only be called when the *
  * entire Digital Dash is reset                               */
 static void DigitalDash_Reset_PID_Stream( void )
@@ -150,6 +157,9 @@ static PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 			return &stream[i];
 		}
 	}
+
+	/* Clear any data the PID has */
+	DigitalDash_Reset_PID( pid );
 
 	/* Copy the PID to the next available stream slot */
 	stream[num_pids] = *pid;
@@ -541,5 +551,9 @@ void digitaldash_tick( void )
 
     #ifdef USE_LIB_OBDII
     OBDII_tick();
+    #endif
+
+    #ifdef USE_LIB_CAN_BUS_DECODE
+    CAN_Decode_tick();
     #endif
 }
