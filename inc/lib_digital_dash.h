@@ -127,8 +127,10 @@ typedef enum _usb_pwr_state {
 * Fan power enable                                                 *
 ********************************************************************/
 typedef enum _fan_pwr_state {
-    FAN_PWR_DISABLED,
-    FAN_PWR_ENABLED
+    FAN_OFF,
+    FAN_MIN,
+    FAN_MED,
+    FAN_MAX
 } FAN_PWR_STATE, *PFAN_PWR_STATE;
 
 /********************************************************************
