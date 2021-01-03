@@ -416,7 +416,7 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     #ifdef USE_LIB_CAN_BUS_SNIFFER
     /* lib_can_bus_decode initialization */
     decode.filter = filter;
-    CAN_Decode_Initialize(&decode);
+    CAN_Sniffer_Initialize(&decode);
     #endif
 
     #ifdef DECODE_GAUGE_BRIGHTNESS_SUPPORTED
