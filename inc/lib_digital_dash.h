@@ -8,7 +8,7 @@
 #ifndef DIGITAL_DASH_CONFIG
 
 #define USE_LIB_OBDII
-#define USE_LIB_CAN_BUS_DECODE
+#define USE_LIB_CAN_BUS_SNIFFER
 
 /********************************************************************
 * Hardware configuration                                            *
@@ -89,9 +89,9 @@ typedef enum _ecu_comm {
 #include "lib_obdii.h"
 #endif
 
-#ifdef USE_LIB_CAN_BUS_DECODE
+#ifdef USE_LIB_CAN_BUS_SNIFFER
 #ifdef FORD_FOCUS_STRS_2013_2018
-#include "lib_CAN_bus_decode.h"
+#include "lib_CAN_bus_sniffer.h"
 #endif
 #endif
 

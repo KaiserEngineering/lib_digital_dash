@@ -6,7 +6,6 @@
 * @author Matthew Kaiser
 *
 * @compatibility DD-CAN-001 Rev A
-*
 * @description Library to communicate between the vehicle's ECU and Kaiser
 * Engineering GUI software.
 *
@@ -62,7 +61,7 @@ static KE_PACKET_MANAGER rasp_pi;
 static OBDII_PACKET_MANAGER obdii;
 #endif
 
-#ifdef LIB_CAN_BUS_DECODE_H_
+#ifdef LIB_CAN_BUS_SNIFFER_H_
 /* Declare a CAN Bus decode packet manager */
 static CAN_DECODE_PACKET_MANAGER decode;
 #endif
@@ -173,10 +172,10 @@ static PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 	/* Increment the number of PIDs */
 	num_pids++;
 
-	#ifdef LIB_CAN_BUS_DECODE_H_
+	#ifdef LIB_CAN_BUS_SNIFFER_H_
 	/* Add the PID to the decode stream if supported */
 	if( CAN_Decode_Add_PID( &decode, ptr ) == PID_SUPPORTED ) {
-		ptr->acquisition_type = PID_ASSIGNED_TO_CAN_DECODE;
+		ptr->acquisition_type = PID_ASSIGNED_TO_CAN_SNIFFER;
 		return ptr;
 	}
 	#endif
@@ -295,7 +294,7 @@ void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data )
     OBDII_Add_Packet( &obdii, id, data );
 	#endif
 
-	#ifdef LIB_CAN_BUS_DECODE_H_
+	#ifdef LIB_CAN_BUS_SNIFFER_H_
     CAN_Decode_Add_Packet( &decode, id, data );
 	#endif
 }
@@ -414,7 +413,7 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     OBDII_Initialize( &obdii );
     #endif
 
-    #ifdef USE_LIB_CAN_BUS_DECODE
+    #ifdef USE_LIB_CAN_BUS_SNIFFER
     /* lib_can_bus_decode initialization */
     decode.filter = filter;
     CAN_Decode_Initialize(&decode);
@@ -553,7 +552,7 @@ void digitaldash_tick( void )
     OBDII_tick();
     #endif
 
-    #ifdef USE_LIB_CAN_BUS_DECODE
+    #ifdef USE_LIB_CAN_BUS_SNIFFER
     CAN_Decode_tick();
     #endif
 }
