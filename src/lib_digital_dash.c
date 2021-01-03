@@ -295,7 +295,7 @@ void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data )
 	#endif
 
 	#ifdef LIB_CAN_BUS_SNIFFER_H_
-    CAN_Decode_Add_Packet( &decode, id, data );
+    CAN_Sniffer_Add_Packet( &decode, id, data );
 	#endif
 }
 
