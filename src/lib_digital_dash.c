@@ -174,7 +174,7 @@ static PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 
 	#ifdef LIB_CAN_BUS_SNIFFER_H_
 	/* Add the PID to the decode stream if supported */
-	if( CAN_Decode_Add_PID( &decode, ptr ) == PID_SUPPORTED ) {
+	if( CAN_Sniffer_Add_PID( &decode, ptr ) == PID_SUPPORTED ) {
 		ptr->acquisition_type = PID_ASSIGNED_TO_CAN_SNIFFER;
 		return ptr;
 	}
