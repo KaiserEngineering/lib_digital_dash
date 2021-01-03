@@ -63,7 +63,7 @@ static OBDII_PACKET_MANAGER obdii;
 
 #ifdef LIB_CAN_BUS_SNIFFER_H_
 /* Declare a CAN Bus decode packet manager */
-static CAN_DECODE_PACKET_MANAGER decode;
+static CAN_SNIFFER_PACKET_MANAGER decode;
 #endif
 
 /* Configure the Digital Dash to sync the backlight with the vehicle's lighting */
