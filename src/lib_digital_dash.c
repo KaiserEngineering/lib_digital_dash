@@ -553,6 +553,6 @@ void digitaldash_tick( void )
     #endif
 
     #ifdef USE_LIB_CAN_BUS_SNIFFER
-    CAN_Decode_tick();
+    CAN_Sniffer_tick();
     #endif
 }
