@@ -509,7 +509,7 @@ DIGITALDASH_STATUS digitaldash_service( void )
 
             Update_LCD_Brightness(0);
         } else {
-            #ifdef DECODE_GAUGE_BRIGHTNESS_SUPPORTED
+            #ifdef SNIFF_GAUGE_BRIGHTNESS_SUPPORTED
             Update_LCD_Brightness( (uint8_t)gauge_brightness->pid_value );
             #else
             Update_LCD_Brightness( LCD_MAX_BRIGHTNESS );
