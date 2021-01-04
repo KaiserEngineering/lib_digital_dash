@@ -62,13 +62,13 @@ static OBDII_PACKET_MANAGER obdii;
 #endif
 
 #ifdef LIB_CAN_BUS_SNIFFER_H_
-/* Declare a CAN Bus decode packet manager */
-static CAN_SNIFFER_PACKET_MANAGER decode;
+/* Declare a CAN Bus sniffer packet manager */
+static CAN_SNIFFER_PACKET_MANAGER sniffer;
 #endif
 
 /* Configure the Digital Dash to sync the backlight with the vehicle's lighting */
-#ifdef DECODE_GAUGE_BRIGHTNESS_SUPPORTED
-static PID_DATA gauge_brightness_req = { .pid = DECODE_GAUGE_BRIGHTNESS, .mode = DECODE, .pid_unit = PID_UNITS_PERCENT, .pid_value = 100 };
+#ifdef SNIFF_GAUGE_BRIGHTNESS_SUPPORTED
+static PID_DATA gauge_brightness_req = { .pid = SNIFF_GAUGE_BRIGHTNESS, .mode = SNIFF, .pid_unit = PID_UNITS_PERCENT, .pid_value = 100 };
 static PTR_PID_DATA gauge_brightness;
 #endif
 
@@ -173,8 +173,8 @@ static PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 	num_pids++;
 
 	#ifdef LIB_CAN_BUS_SNIFFER_H_
-	/* Add the PID to the decode stream if supported */
-	if( CAN_Sniffer_Add_PID( &decode, ptr ) == PID_SUPPORTED ) {
+	/* Add the PID to the sniffer if supported */
+	if( CAN_Sniffer_Add_PID( &sniffer, ptr ) == PID_SUPPORTED ) {
 		ptr->acquisition_type = PID_ASSIGNED_TO_CAN_SNIFFER;
 		return ptr;
 	}
@@ -295,7 +295,7 @@ void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data )
 	#endif
 
 	#ifdef LIB_CAN_BUS_SNIFFER_H_
-    CAN_Sniffer_Add_Packet( &decode, id, data );
+    CAN_Sniffer_Add_Packet( &sniffer, id, data );
 	#endif
 }
 
@@ -414,12 +414,12 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     #endif
 
     #ifdef USE_LIB_CAN_BUS_SNIFFER
-    /* lib_can_bus_decode initialization */
-    decode.filter = filter;
-    CAN_Sniffer_Initialize(&decode);
+    /* lib_can_bus_sniffer initialization */
+    sniffer.filter = filter;
+    CAN_Sniffer_Initialize(&sniffer);
     #endif
 
-    #ifdef DECODE_GAUGE_BRIGHTNESS_SUPPORTED
+    #ifdef SNIFF_GAUGE_BRIGHTNESS_SUPPORTED
     /* Start obtaining the gauge brightness */
     gauge_brightness = DigitalDash_Add_PID_To_Stream( &gauge_brightness_req );
     #endif
