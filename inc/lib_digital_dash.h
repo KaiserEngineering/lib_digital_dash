@@ -7,9 +7,6 @@
 
 #ifndef DIGITAL_DASH_CONFIG
 
-#define USE_LIB_OBDII
-#define USE_LIB_CAN_BUS_SNIFFER
-
 /********************************************************************
 * Hardware configuration                                            *
 ********************************************************************/
