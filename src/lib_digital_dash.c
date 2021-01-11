@@ -105,6 +105,11 @@ DD_CAN_FILTER filter                      = null;
 
 DIGITALDASH_INIT_STATUS DigitalDash_Config_Null_Check( void );
 
+static uint32_t map(uint32_t in, uint32_t inMin, uint32_t inMax, uint32_t outMin, uint32_t outMax)
+{
+    return (((in - inMin)*(outMax - outMin))/(inMax - inMin)) + outMin;
+}
+
 static void DigitalDash_Reset_PID( PTR_PID_DATA pid )
 {
     pid->acquisition_type = PID_UNASSIGNED;
@@ -171,6 +176,9 @@ static PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 
 	/* Increment the number of PIDs */
 	num_pids++;
+
+	/* Get the base units */
+	ptr->base_unit = get_pid_base_unit( ptr->mode , pid->pid );
 
 	#ifdef LIB_CAN_BUS_SNIFFER_H_
 	/* Add the PID to the sniffer if supported */
@@ -510,7 +518,25 @@ DIGITALDASH_STATUS digitaldash_service( void )
             Update_LCD_Brightness(0);
         } else {
             #ifdef SNIFF_GAUGE_BRIGHTNESS_SUPPORTED
-            Update_LCD_Brightness( (uint8_t)gauge_brightness->pid_value );
+            /* TODO - Adjustments may be needed with real world testing */
+            /* Map the gauge brightness to the LCD driver */
+            uint32_t brightness_adjusted = map( gauge_brightness->pid_value,
+                    FORD_MIN_BRIGHTNESS, FORD_MAX_BRIGHTNESS,
+                    LCD_MIN_BRIGHTNESS, LCD_MAX_BRIGHTNESS );
+
+            /* Default to max brightness if no data has been RX'd */
+            if( gauge_brightness->timestamp == 0 )
+                brightness_adjusted = LCD_MAX_BRIGHTNESS;
+
+            /* Make sure the brightness is within the supported range. */
+            else if( brightness_adjusted <= LCD_MIN_BRIGHTNESS )
+                brightness_adjusted = LCD_MIN_BRIGHTNESS;
+
+            /* Make sure the brightness is within the supported range. */
+            else if( brightness_adjusted >= LCD_MAX_BRIGHTNESS )
+                brightness_adjusted = LCD_MAX_BRIGHTNESS;
+
+            Update_LCD_Brightness( brightness_adjusted );
             #else
             Update_LCD_Brightness( LCD_MAX_BRIGHTNESS );
             #endif
