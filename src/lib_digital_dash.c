@@ -87,6 +87,9 @@ static volatile uint32_t digitaldash_app_wtchdg = 0xFFFFFFFF;
 /* Timer to disable the LCD backlight if comm. stops */
 static volatile uint32_t digitaldash_bklt_wtchdg = 0xFFFFFFFF;
 
+/* Timer to re-enable any communication that would effect a test device */
+static volatile uint32_t tester_present = 0;
+
 /* Number of packets before enabling the LCD backlight */
 #define KE_UART_THRESHOLD 40
 
@@ -305,6 +308,19 @@ void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data )
 	#ifdef LIB_CAN_BUS_SNIFFER_H_
     CAN_Sniffer_Add_Packet( &sniffer, id, data );
 	#endif
+
+    #ifdef LIB_OBDII_H_
+    if( (id >= 0x7E0) && (id <= 0x7FF) )
+    {
+        tester_present = TESTER_PRESENT_DELAY;
+
+        update_app_flag( DD_TESTER_PRESENT, TESTER_PRESENT );
+
+        #ifdef LIB_OBDII_H_
+        OBDII_Pause( &obdii );
+        #endif
+    }
+    #endif
 }
 
 /* Callback to request active cooling, right now this is configured *
@@ -571,6 +587,23 @@ void digitaldash_tick( void )
 
     if( digitaldash_bklt_wtchdg > 0 )
         digitaldash_bklt_wtchdg--;
+
+    #ifdef USE_LIB_OBDII
+    if( tester_present > 0 ) {
+        tester_present--;
+    }
+    /* Check if a tester was previously present */
+    else if( digitaldash_get_flag( DD_TESTER_PRESENT ) == TESTER_PRESENT )
+    {
+        /* The timer expired, therefore it is assumed no tester is present */
+        update_app_flag( DD_TESTER_PRESENT, NO_TESTER_PRESENT );
+
+        #ifdef LIB_OBDII_H_
+        /* Allow OBDII communication now that it is the only device present */
+        OBDII_Continue( &obdii );
+        #endif
+    }
+    #endif
 
     KE_tick();
 

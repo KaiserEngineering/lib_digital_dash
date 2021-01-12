@@ -50,6 +50,8 @@
 #define LCD_MIN_BRIGHTNESS 20
 #define LCD_BKLT_TIMEOUT 250
 
+#define TESTER_PRESENT_DELAY 10000
+
 #define FORCE_USB_ON     1
 
 #define DD_MAX_PIDS 25
@@ -173,7 +175,10 @@ typedef enum _digitaldash_flags{
     DD_LCD_STATE,
         #define LCD_DISABLED              0
         #define LCD_ENABLED               1
-    DD_USB_PWR
+    DD_USB_PWR,
+    DD_TESTER_PRESENT
+        #define TESTER_PRESENT            0
+        #define NO_TESTER_PRESENT         1
 
 } DIGITALDASH_FLAG, *PDIGITALDASH_FLAG;
 
