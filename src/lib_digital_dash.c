@@ -310,7 +310,8 @@ void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data )
 	#endif
 
     #ifdef LIB_OBDII_H_
-    if( (id >= 0x7E0) && (id <= 0x7FF) )
+    /* TODO: 7E0 is the common tester ID, but others could be used */
+    if( id == 0x7E0 )
     {
         tester_present = TESTER_PRESENT_DELAY;
 
