@@ -96,6 +96,11 @@ static volatile uint32_t tester_present = 0;
 /* Number of packets rx'd from the host */
 static uint32_t ke_uart_count = 0;
 
+#ifdef SPOOF_DATA
+#define SPOOF_INTERVAL_T      25 // ms
+static uint32_t spoof_count = 0;
+#endif
+
 /* Application callbacks */
 DD_GET_SD_CARD_STATE get_sd_card_state    = null;
 DD_KE_TX ke_tx                            = null;
@@ -580,6 +585,35 @@ DIGITALDASH_STATUS digitaldash_service( void )
 
 void digitaldash_tick( void )
 {
+    #ifdef SPOOF_DATA
+    spoof_count = (spoof_count + 1) % SPOOF_INTERVAL_T;
+    if( spoof_count == 0 )
+    {
+        for( uint8_t i = 0; i < num_pids; i++ )
+        {
+            if( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_ENGINE_RPM) )
+            {
+                stream[i].timestamp++;
+                stream[i].pid_value++;
+                if( stream[i].pid_value >= 8000 )
+                    stream[i].pid_value = 900;
+            } else if ( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_TURBO_INLET_PRESSURE) )
+            {
+                stream[i].timestamp++;
+                stream[i].pid_value = stream[i].pid_value + 0.05;
+                if( stream[i].pid_value >= 255 )
+                    stream[i].pid_value = 0;
+            } else if ( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_ENGINE_OIL_TEMPERATURE) )
+            {
+                stream[i].timestamp++;
+                stream[i].pid_value = stream[i].pid_value + 0.05;
+                if( stream[i].pid_value >= 200 )
+                    stream[i].pid_value = 0;
+            }
+        }
+    }
+    #endif
+
     if( digitaldash_delay > 0 )
         digitaldash_delay--;
 
