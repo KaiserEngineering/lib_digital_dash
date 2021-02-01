@@ -594,7 +594,7 @@ void digitaldash_tick( void )
             if( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_ENGINE_RPM) )
             {
                 stream[i].timestamp++;
-                stream[i].pid_value++;
+                stream[i].pid_value = stream[i].pid_value + 10;
                 if( stream[i].pid_value >= 8000 )
                     stream[i].pid_value = 900;
             } else if ( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_TURBO_INLET_PRESSURE) )
@@ -606,7 +606,7 @@ void digitaldash_tick( void )
             } else if ( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_ENGINE_OIL_TEMPERATURE) )
             {
                 stream[i].timestamp++;
-                stream[i].pid_value = stream[i].pid_value + 0.05;
+                stream[i].pid_value = stream[i].pid_value + 0.1;
                 if( stream[i].pid_value >= 200 )
                     stream[i].pid_value = 0;
             }
