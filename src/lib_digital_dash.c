@@ -132,14 +132,70 @@ static void DigitalDash_Reset_PID_Stream( void )
 	num_pids = 0x00000000;
 
 	for( uint8_t index = 0; index < DD_MAX_PIDS; index++ )
-	{
-		stream[index].pid = 0x00;
-		stream[index].pid_unit = PID_UNITS_NOT_APPLICABLE;
-		stream[index].base_unit = PID_UNITS_NOT_APPLICABLE;
-		stream[index].acquisition_type = PID_UNASSIGNED;
-		stream[index].pid_value = 0;
-		stream[index].timestamp = 0;
-	}
+	    lib_pid_clear_PID( &stream[index] );
+}
+
+static int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
+{
+    /* Iterate through every currently streamed PID and check if the *
+     * PID is being streamed                                         */
+    for( uint8_t i = 0; i <= num_pids; i++ )
+    {
+        /* If so, return a 1 */
+        if( stream[i].pid == pid->pid  &&
+                stream[i].mode == pid->mode )
+        {
+            /* Decrement the number of devices */
+            stream[i].devices--;
+
+            /* Stop acquiring the PID data if no devices are         *
+             * requesting data.                                      */
+            if( stream[i].devices == 0 )
+            {
+                switch( stream[i].acquisition_type )
+                {
+                    #ifdef LIB_CAN_BUS_SNIFFER_H_
+                    /* Remove the PID to the sniffer if supported */
+                    case PID_ASSIGNED_TO_CAN_SNIFFER:
+                        CAN_Sniffer_Remove_PID( &sniffer, pid );
+                        break;
+                    #endif
+
+                    #ifdef LIB_OBDII_H_
+                    /* Remove the PID to the OBDII stream if supported */
+                    case PID_ASSIGNED_TO_OBDII:
+                        OBDII_remove_PID_request( &obdii, pid );
+                        break;
+                    #endif
+
+                    default:
+                        break;
+                }
+
+                /* Cycle through all the PIDs to find which one must be removed */
+                for( uint8_t j = 0; j < num_pids; j++ )
+                {
+                    /* If found, pop that pointer reference */
+                    if( &stream[j] == pid )
+                    {
+                        if( num_pids > 1 )
+                        {
+                            for( uint8_t k = j + 1; k < num_pids; k++ )
+                            {
+                                stream[k - 1] = stream[k];
+                                lib_pid_clear_PID( &stream[k] );
+                            }
+                        }
+
+                        /* Remove the PID */
+                        num_pids--;
+                    }
+                }
+            }
+        }
+    }
+
+    return 1;
 }
 
 /* Add a new PID to the data stream, lib_digital_dash is the master, *
@@ -318,12 +374,12 @@ void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data )
     /* TODO: 7E0 is the common tester ID, but others could be used */
     if( id == 0x7E0 )
     {
-        tester_present = TESTER_PRESENT_DELAY;
+        //tester_present = TESTER_PRESENT_DELAY;
 
-        update_app_flag( DD_TESTER_PRESENT, TESTER_PRESENT );
+        //update_app_flag( DD_TESTER_PRESENT, TESTER_PRESENT );
 
         #ifdef LIB_OBDII_H_
-        OBDII_Pause( &obdii );
+        //OBDII_Pause( &obdii );
         #endif
     }
     #endif
@@ -423,6 +479,7 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     /* lib_ke_protocol initialization */
     rasp_pi.init.transmit = ke_tx;                                  /* Function call to transmit UART data to the host */
     rasp_pi.init.req_pid = &DigitalDash_Add_PID_To_Stream;          /* Function call to request a PID */
+    rasp_pi.init.clear_pid = &DigitalDash_Remove_PID_From_Stream;   /* Function call to remove a PID */
     rasp_pi.init.cooling = &active_cooling;
     rasp_pi.init.firmware_version_major  = FIRMWARE_VERSION_MAJOR;  /* Firmware version */
     rasp_pi.init.firmware_version_minor  = FIRMWARE_VERSION_MINOR;  /* Firmware version */
