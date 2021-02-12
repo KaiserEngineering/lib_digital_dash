@@ -139,20 +139,19 @@ static int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
 {
     /* Iterate through every currently streamed PID and check if the *
      * PID is being streamed                                         */
-    for( uint8_t i = 0; i <= num_pids; i++ )
+    for( uint8_t index = 0; index <= num_pids; index++ )
     {
         /* If so, return a 1 */
-        if( stream[i].pid == pid->pid  &&
-                stream[i].mode == pid->mode )
+        if( &stream[index] == pid )
         {
             /* Decrement the number of devices */
-            stream[i].devices--;
+            stream[index].devices--;
 
             /* Stop acquiring the PID data if no devices are         *
              * requesting data.                                      */
-            if( stream[i].devices == 0 )
+            if( stream[index].devices == 0 )
             {
-                switch( stream[i].acquisition_type )
+                switch( stream[index].acquisition_type )
                 {
                     #ifdef LIB_CAN_BUS_SNIFFER_H_
                     /* Remove the PID to the sniffer if supported */
@@ -172,24 +171,8 @@ static int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
                         break;
                 }
 
-                /* Cycle through all the PIDs to find which one must be removed */
-                for( uint8_t j = 0; j < num_pids; j++ )
-                {
-                    /* If found, pop that pointer reference */
-                    if( &stream[j] == pid )
-                    {
-                        if( num_pids > 1 )
-                        {
-                            for( uint8_t k = j + 1; k < num_pids; k++ )
-                            {
-                                stream[k - 1] = stream[k];
-                                lib_pid_clear_PID( &stream[k] );
-                            }
-                        }
-
-                        /* Remove the PID */
-                        num_pids--;
-                    }
+                for( uint8_t i = index; index < num_pids; index++ ) {
+                    stream[i] = stream[i + 1];
                 }
             }
         }
