@@ -175,6 +175,8 @@ static int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
                 for( uint8_t i = index; index < num_pids; index++ ) {
                     stream[i] = stream[i + 1];
                 }
+
+                num_pids--;
             }
         }
     }
