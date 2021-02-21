@@ -145,7 +145,8 @@ static int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
         if( &stream[index] == pid )
         {
             /* Decrement the number of devices */
-            stream[index].devices--;
+            if( stream[index].devices > 0 )
+                stream[index].devices--;
 
             /* Stop acquiring the PID data if no devices are         *
              * requesting data.                                      */
