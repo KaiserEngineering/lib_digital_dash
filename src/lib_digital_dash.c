@@ -172,7 +172,7 @@ static int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
                         break;
                 }
 
-                for( uint8_t i = index; index < num_pids; index++ ) {
+                lib_pid_clear_PID( &stream[index] );
                     stream[i] = stream[i + 1];
                 }
 
