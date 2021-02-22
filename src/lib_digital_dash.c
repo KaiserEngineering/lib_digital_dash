@@ -172,6 +172,8 @@ static int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
                         break;
                 }
 
+                /* Clear the PID, but DO NOT change the array order, other *
+                 * libraries are referencing this data.                    */
                 lib_pid_clear_PID( &stream[index] );
 
                 num_pids--;
