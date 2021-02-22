@@ -200,6 +200,14 @@ static PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 	/* Declare a NULL pointer */
 	PTR_PID_DATA ptr = NULL;
 
+	uint8_t slot = 0;
+
+	for( slot = 0; slot < DD_MAX_PIDS; slot++)
+	{
+	    if( stream[slot].pid == PID_UNASSIGNED )
+	        break;
+	}
+
 	/* Iterate through every currently streamed PID and check if the *
 	 * PID is being streamed                                         */
 	for( uint8_t i = 0; i <= num_pids; i++ )
@@ -218,13 +226,13 @@ static PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 	DigitalDash_Reset_PID( pid );
 
 	/* Copy the PID to the next available stream slot */
-	stream[num_pids] = *pid;
+	stream[slot] = *pid;
 
 	/* Increment the number of devices */
-	stream[num_pids].devices++;
+	stream[slot].devices++;
 
 	/* Get the pointer of that slot */
-	ptr = &stream[num_pids];
+	ptr = &stream[slot];
 
 	/* Increment the number of PIDs */
 	num_pids++;
