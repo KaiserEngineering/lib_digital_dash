@@ -173,8 +173,6 @@ static int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
                 }
 
                 lib_pid_clear_PID( &stream[index] );
-                    stream[i] = stream[i + 1];
-                }
 
                 num_pids--;
             }
