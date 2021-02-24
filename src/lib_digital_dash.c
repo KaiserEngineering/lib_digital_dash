@@ -636,6 +636,12 @@ DIGITALDASH_STATUS digitaldash_service( void )
     }
 }
 
+#ifdef SPOOF_DATA
+float engine_rpm = 900;
+float turbo = 0;
+float oil_temp = 0;
+#endif
+
 void digitaldash_tick( void )
 {
     #ifdef SPOOF_DATA
@@ -647,21 +653,24 @@ void digitaldash_tick( void )
             if( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_ENGINE_RPM) )
             {
                 stream[i].timestamp++;
-                stream[i].pid_value = stream[i].pid_value + 10;
-                if( stream[i].pid_value >= 8000 )
-                    stream[i].pid_value = 900;
+                engine_rpm += 10;
+                stream[i].pid_value = engine_rpm;
+                if( engine_rpm >= 8000 )
+                    engine_rpm = 900;
             } else if ( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_TURBO_INLET_PRESSURE) )
             {
                 stream[i].timestamp++;
-                stream[i].pid_value = stream[i].pid_value + 0.05;
-                if( stream[i].pid_value >= 255 )
-                    stream[i].pid_value = 0;
+                turbo += 0.05;
+                stream[i].pid_value = turbo;
+                if( turbo >= 255 )
+                    turbo = 0;
             } else if ( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_ENGINE_OIL_TEMPERATURE) )
             {
                 stream[i].timestamp++;
-                stream[i].pid_value = stream[i].pid_value + 0.1;
-                if( stream[i].pid_value >= 200 )
-                    stream[i].pid_value = 0;
+                oil_temp += 0.1;
+                stream[i].pid_value = oil_temp;
+                if( oil_temp >= 200 )
+                    oil_temp = 0;
             }
         }
     }
