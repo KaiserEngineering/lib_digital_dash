@@ -139,7 +139,7 @@ static int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
 {
     /* Iterate through every currently streamed PID and check if the *
      * PID is being streamed                                         */
-    for( uint8_t index = 0; index <= num_pids; index++ )
+    for( uint8_t index = 0; index < num_pids; index++ )
     {
         /* If so, return a 1 */
         if( &stream[index] == pid )
