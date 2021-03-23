@@ -48,9 +48,6 @@ static volatile uint32_t app_flags = 0;
 /* Current state of the Digital Dash */
 static volatile DIGITALDASH_OPERATING_STATE state = DD_OP_OFF;
 
-/* Current temperature of the Host */
-static volatile uint8_t digitaldash_active_cooling = 0x00;
-
 #ifdef LIB_KE_PROTOCOL_H_
 /* Declare a KE packet manager */
 static KE_PACKET_MANAGER rasp_pi;
