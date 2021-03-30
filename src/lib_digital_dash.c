@@ -64,7 +64,7 @@ static CAN_SNIFFER_PACKET_MANAGER sniffer;
 #endif
 
 /* Configure the Digital Dash to sync the backlight with the vehicle's lighting */
-#ifdef SNIFF_GAUGE_BRIGHTNESS_SUPPORTED
+#if defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)
 static PID_DATA gauge_brightness_req = { .pid = SNIFF_GAUGE_BRIGHTNESS, .mode = SNIFF, .pid_unit = PID_UNITS_PERCENT, .pid_value = 100 };
 static PTR_PID_DATA gauge_brightness;
 #endif
@@ -499,7 +499,7 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     CAN_Sniffer_Initialize(&sniffer);
     #endif
 
-    #ifdef SNIFF_GAUGE_BRIGHTNESS_SUPPORTED
+    #if defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)
     /* Start obtaining the gauge brightness */
     gauge_brightness = DigitalDash_Add_PID_To_Stream( &gauge_brightness_req );
     #endif
@@ -589,7 +589,7 @@ DIGITALDASH_STATUS digitaldash_service( void )
 
             Update_LCD_Brightness(0);
         } else {
-            #ifdef SNIFF_GAUGE_BRIGHTNESS_SUPPORTED
+            #if defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)
             /* TODO - Adjustments may be needed with real world testing */
             /* Map the gauge brightness to the LCD driver */
             uint32_t brightness_adjusted = map( gauge_brightness->pid_value,
