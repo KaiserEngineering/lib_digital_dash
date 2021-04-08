@@ -367,12 +367,12 @@ void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data )
     /* TODO: 7E0 is the common tester ID, but others could be used */
     if( id == 0x7E0 )
     {
-        //tester_present = TESTER_PRESENT_DELAY;
+        tester_present = TESTER_PRESENT_DELAY;
 
-        //update_app_flag( DD_TESTER_PRESENT, TESTER_PRESENT );
+        update_app_flag( DD_TESTER_PRESENT, TESTER_PRESENT );
 
         #ifdef LIB_OBDII_H_
-        //OBDII_Pause( &obdii );
+        OBDII_Pause( &obdii );
         #endif
     }
     #endif
