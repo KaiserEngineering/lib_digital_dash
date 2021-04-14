@@ -647,17 +647,17 @@ void digitaldash_tick( void )
     {
         for( uint8_t i = 0; i < num_pids; i++ )
         {
-            if( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_ENGINE_RPM) )
+            if( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_ENGINE_SPEED) )
             {
                 stream[i].timestamp++;
                 engine_rpm += 10;
                 stream[i].pid_value = engine_rpm;
                 if( engine_rpm >= 8000 )
                     engine_rpm = 900;
-            } else if ( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_TURBO_INLET_PRESSURE) )
+            } else if ( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_TURBOCHARGER_COMPRESSOR_INLET_PRESSURE) )
             {
                 stream[i].timestamp++;
-                turbo += 0.05;
+                turbo += 0.5;
                 stream[i].pid_value = turbo;
                 if( turbo >= 255 )
                     turbo = 0;
