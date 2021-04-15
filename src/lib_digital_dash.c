@@ -470,13 +470,13 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
 #endif
 
     /* lib_ke_protocol initialization */
-    rasp_pi.init.transmit = ke_tx;                                  /* Function call to transmit UART data to the host */
-    rasp_pi.init.req_pid = &DigitalDash_Add_PID_To_Stream;          /* Function call to request a PID */
+    rasp_pi.init.transmit  = ke_tx;                                 /* Function call to transmit UART data to the host */
+    rasp_pi.init.req_pid   = &DigitalDash_Add_PID_To_Stream;        /* Function call to request a PID */
     rasp_pi.init.clear_pid = &DigitalDash_Remove_PID_From_Stream;   /* Function call to remove a PID */
-    rasp_pi.init.cooling = &active_cooling;
-    rasp_pi.init.firmware_version_major  = FIRMWARE_VERSION_MAJOR;  /* Firmware version */
-    rasp_pi.init.firmware_version_minor  = FIRMWARE_VERSION_MINOR;  /* Firmware version */
-    rasp_pi.init.firmware_version_hotfix = FIRMWARE_VERSION_HOTFIX; /* Firmware version */
+    rasp_pi.init.cooling   = &active_cooling;                       /* Function call to request active cooling */
+    rasp_pi.init.firmware_version_major  = FIRMWARE_VERSION_MAJOR;  /* Major firmware version */
+    rasp_pi.init.firmware_version_minor  = FIRMWARE_VERSION_MINOR;  /* Minor firmware version */
+    rasp_pi.init.firmware_version_hotfix = FIRMWARE_VERSION_HOTFIX; /* Hot fix firmware version */
 
     /* Initialize the KE library */
     if( KE_Initialize( &rasp_pi ) != KE_OK )
