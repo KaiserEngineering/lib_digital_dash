@@ -211,7 +211,8 @@ static PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 	{
 		/* If so, return the pointer */
 		if( stream[i].pid == pid->pid  &&
-				stream[i].mode == pid->mode )
+				stream[i].mode == pid->mode &&
+				stream[i].pid_unit == pid->pid_unit )
 		{
 			/* Increment the number of devices */
 			stream[i].devices++;
