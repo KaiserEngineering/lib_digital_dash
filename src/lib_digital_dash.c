@@ -84,6 +84,9 @@ static volatile uint32_t digitaldash_app_wtchdg = 0xFFFFFFFF;
 /* Timer to disable the LCD backlight if comm. stops */
 static volatile uint32_t digitaldash_bklt_wtchdg = 0xFFFFFFFF;
 
+/* Timer to shutdown the Digital Dash */
+static volatile uint32_t digitaldash_shutdown = 0xFFFFFFFF;
+
 /* Timer to re-enable any communication that would effect a test device */
 static volatile uint32_t tester_present = 0;
 
@@ -355,6 +358,8 @@ void DigitalDash_Add_UART_byte( uint8_t byte )
 /* Copy the CAN packets to the relevant libraries */
 void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data )
 {
+    digitaldash_shutdown = CAN_BUS_IDLE_TIME;
+
 	#ifdef LIB_OBDII_H_
     OBDII_Add_Packet( &obdii, id, data );
 	#endif
@@ -562,6 +567,11 @@ DIGITALDASH_STATUS digitaldash_service( void )
          * until the delay is complete. This will NOT block any other application code         */
         if( digitaldash_delay > 0 ) { /* Do nothing */ }
         
+        /* Turn off the host */
+        else if( (digitaldash_shutdown <= 0) &&
+                (digitaldash_get_flag( DD_FLG_HOST_PWR ) == HOST_PWR_ENABLED) )
+            host_power( HOST_PWR_DISABLED );
+
         /* First, check to see if the host is ready to boot by verifying the SD card is *
          * inserted. This only needs to be checked when the OS is on the SD card. If    *
          * the device has an EMMC, this check can be skipped.                           */
@@ -573,12 +583,9 @@ DIGITALDASH_STATUS digitaldash_service( void )
         /* All hardware is present, so the Digital Dash is ready to be powered on.      *
          * Enable power to the host, and begin a timer to make sure the device properly *
          * boots and does not hang.                                                     */
-        else if( digitaldash_get_flag( DD_FLG_HOST_PWR ) == HOST_PWR_DISABLED )
+        else if( (digitaldash_shutdown > 0) &&
+                (digitaldash_get_flag( DD_FLG_HOST_PWR ) == HOST_PWR_DISABLED) )
             host_power( HOST_PWR_ENABLED );
-
-        /* If the application timer expires, reset the hardware                        */
-        if( digitaldash_app_wtchdg <= 0 )
-            DigitalDash_PowerCylce();
 
 		#ifdef BKLT_CTRL_ACTIVE
         /* Turn off the LCD if no messages are received by LCD_BKLT_TIMEOUT */
@@ -681,6 +688,9 @@ void digitaldash_tick( void )
 
     if( digitaldash_bklt_wtchdg > 0 )
         digitaldash_bklt_wtchdg--;
+
+    if( digitaldash_shutdown > 0 )
+        digitaldash_shutdown--;
 
     #ifdef USE_LIB_OBDII
     if( tester_present > 0 ) {
