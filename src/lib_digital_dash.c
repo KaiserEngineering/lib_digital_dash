@@ -69,6 +69,11 @@ static PID_DATA gauge_brightness_req = { .pid = SNIFF_GAUGE_BRIGHTNESS, .mode = 
 static PTR_PID_DATA gauge_brightness;
 #endif
 
+#if defined(SNIFF_VEHICLE_STATUS_SUPPORTED) || !defined(LIMIT_PIDS)
+static PID_DATA vehicle_status_req = { .pid = SNIFF_VEHICLE_STATUS, .mode = SNIFF, .pid_unit = PID_UNITS_NOT_APPLICABLE, .pid_value = 0 };
+static PTR_PID_DATA vehicle_status;
+#endif
+
 /* Current LCD backlight brightness */
 static uint8_t Brightness = 0;
 
@@ -85,7 +90,7 @@ static volatile uint32_t digitaldash_app_wtchdg = 0xFFFFFFFF;
 static volatile uint32_t digitaldash_bklt_wtchdg = 0xFFFFFFFF;
 
 /* Timer to shutdown the Digital Dash */
-static volatile uint32_t digitaldash_shutdown = 0xFFFFFFFF;
+static volatile uint32_t digitaldash_shutdown = CAN_BUS_IDLE_TIME * 10;
 
 /* Timer to re-enable any communication that would effect a test device */
 static volatile uint32_t tester_present = 0;
@@ -358,8 +363,6 @@ void DigitalDash_Add_UART_byte( uint8_t byte )
 /* Copy the CAN packets to the relevant libraries */
 void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data )
 {
-    digitaldash_shutdown = CAN_BUS_IDLE_TIME;
-
 	#ifdef LIB_OBDII_H_
     OBDII_Add_Packet( &obdii, id, data );
 	#endif
@@ -509,6 +512,10 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     gauge_brightness = DigitalDash_Add_PID_To_Stream( &gauge_brightness_req );
     #endif
 
+    #if defined(SNIFF_VEHICLE_STATUS_SUPPORTED) || !defined(LIMIT_PIDS)
+    vehicle_status = DigitalDash_Add_PID_To_Stream( &vehicle_status_req );
+    #endif
+
     /* Set the initialized flag */
     update_app_flag( DD_FLG_INIT, DD_INITIALIZED );
 
@@ -584,8 +591,13 @@ DIGITALDASH_STATUS digitaldash_service( void )
          * Enable power to the host, and begin a timer to make sure the device properly *
          * boots and does not hang.                                                     */
         else if( (digitaldash_shutdown > 0) &&
-                (digitaldash_get_flag( DD_FLG_HOST_PWR ) == HOST_PWR_DISABLED) )
+                (digitaldash_get_flag( DD_FLG_HOST_PWR ) == HOST_PWR_DISABLED) ) {
             host_power( HOST_PWR_ENABLED );
+            fan( FAN_MED );
+        }
+
+        if( vehicle_status->pid_value == 1 )
+            digitaldash_shutdown = CAN_BUS_IDLE_TIME;
 
 		#ifdef BKLT_CTRL_ACTIVE
         /* Turn off the LCD if no messages are received by LCD_BKLT_TIMEOUT */
