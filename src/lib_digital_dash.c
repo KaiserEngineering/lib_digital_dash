@@ -90,7 +90,7 @@ static volatile uint32_t digitaldash_app_wtchdg = 0xFFFFFFFF;
 static volatile uint32_t digitaldash_bklt_wtchdg = 0xFFFFFFFF;
 
 /* Timer to shutdown the Digital Dash */
-static volatile uint32_t digitaldash_shutdown = CAN_BUS_IDLE_TIME * 10;
+static volatile uint32_t digitaldash_shutdown = 300000;
 
 /* Timer to re-enable any communication that would effect a test device */
 static volatile uint32_t tester_present = 0;
