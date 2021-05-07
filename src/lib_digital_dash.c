@@ -69,9 +69,9 @@ static PID_DATA gauge_brightness_req = { .pid = SNIFF_GAUGE_BRIGHTNESS, .mode = 
 static PTR_PID_DATA gauge_brightness;
 #endif
 
-#if defined(SNIFF_VEHICLE_STATUS_SUPPORTED) || !defined(LIMIT_PIDS)
-static PID_DATA vehicle_status_req = { .pid = SNIFF_VEHICLE_STATUS, .mode = SNIFF, .pid_unit = PID_UNITS_NOT_APPLICABLE, .pid_value = 0 };
-static PTR_PID_DATA vehicle_status;
+#if defined(MODE1_ENGINE_SPEED_SUPPORTED) || !defined(LIMIT_PIDS)
+static PID_DATA engine_speed_req = { .pid = MODE1_ENGINE_SPEED, .mode = MODE1, .pid_unit = PID_UNITS_RPM, .pid_value = 0 };
+static PTR_PID_DATA engine_speed;
 #endif
 
 /* Current LCD backlight brightness */
@@ -512,8 +512,8 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     gauge_brightness = DigitalDash_Add_PID_To_Stream( &gauge_brightness_req );
     #endif
 
-    #if defined(SNIFF_VEHICLE_STATUS_SUPPORTED) || !defined(LIMIT_PIDS)
-    vehicle_status = DigitalDash_Add_PID_To_Stream( &vehicle_status_req );
+    #if defined(MODE1_ENGINE_SPEED_SUPPORTED) || !defined(LIMIT_PIDS)
+    engine_speed = DigitalDash_Add_PID_To_Stream( &engine_speed_req );
     #endif
 
     /* Set the initialized flag */
@@ -596,7 +596,7 @@ DIGITALDASH_STATUS digitaldash_service( void )
             fan( FAN_MED );
         }
 
-        if( vehicle_status->pid_value == 1 )
+        if( engine_speed->pid_value >= 500 )
             digitaldash_shutdown = CAN_BUS_IDLE_TIME;
 
 		#ifdef BKLT_CTRL_ACTIVE
