@@ -596,7 +596,7 @@ DIGITALDASH_STATUS digitaldash_service( void )
             fan( FAN_MED );
         }
 
-        if( engine_speed->pid_value >= 500 )
+        if( (engine_speed->pid_value >= 500) || (engine_speed->timestamp == 0) )
             digitaldash_shutdown = CAN_BUS_IDLE_TIME;
 
 		#ifdef BKLT_CTRL_ACTIVE
