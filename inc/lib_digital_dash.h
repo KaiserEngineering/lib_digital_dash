@@ -78,7 +78,7 @@ typedef enum _ecu_comm {
 /********************************************************************
 * OS Configuration                                                  *
 ********************************************************************/
-#define OS_BOOT_TIME_MAX 50000
+#define OS_BOOT_TIME_MAX 600000 // Reboot after 10min
 #define OS_FRAME_TIMEOUT 50000
 
 #endif
