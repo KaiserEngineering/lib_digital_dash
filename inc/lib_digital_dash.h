@@ -52,6 +52,8 @@
 
 #define TESTER_PRESENT_DELAY 10000
 
+#define CAN_BUS_IDLE_TIME 10000
+
 #define FORCE_USB_ON     0
 
 #define DD_MAX_PIDS 25

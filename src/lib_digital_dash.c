@@ -69,6 +69,11 @@ static PID_DATA gauge_brightness_req = { .pid = SNIFF_GAUGE_BRIGHTNESS, .mode = 
 static PTR_PID_DATA gauge_brightness;
 #endif
 
+#if defined(MODE1_ENGINE_SPEED_SUPPORTED) || !defined(LIMIT_PIDS)
+static PID_DATA engine_speed_req = { .pid = MODE1_ENGINE_SPEED, .mode = MODE1, .pid_unit = PID_UNITS_RPM, .pid_value = 0 };
+static PTR_PID_DATA engine_speed;
+#endif
+
 /* Current LCD backlight brightness */
 static uint8_t Brightness = 0;
 
@@ -83,6 +88,9 @@ static volatile uint32_t digitaldash_app_wtchdg = 0xFFFFFFFF;
 
 /* Timer to disable the LCD backlight if comm. stops */
 static volatile uint32_t digitaldash_bklt_wtchdg = 0xFFFFFFFF;
+
+/* Timer to shutdown the Digital Dash */
+static volatile uint32_t digitaldash_shutdown = 300000;
 
 /* Timer to re-enable any communication that would effect a test device */
 static volatile uint32_t tester_present = 0;
@@ -504,6 +512,10 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     gauge_brightness = DigitalDash_Add_PID_To_Stream( &gauge_brightness_req );
     #endif
 
+    #if defined(MODE1_ENGINE_SPEED_SUPPORTED) || !defined(LIMIT_PIDS)
+    engine_speed = DigitalDash_Add_PID_To_Stream( &engine_speed_req );
+    #endif
+
     /* Set the initialized flag */
     update_app_flag( DD_FLG_INIT, DD_INITIALIZED );
 
@@ -562,6 +574,11 @@ DIGITALDASH_STATUS digitaldash_service( void )
          * until the delay is complete. This will NOT block any other application code         */
         if( digitaldash_delay > 0 ) { /* Do nothing */ }
         
+        /* Turn off the host */
+        else if( (digitaldash_shutdown <= 0) &&
+                (digitaldash_get_flag( DD_FLG_HOST_PWR ) == HOST_PWR_ENABLED) )
+            host_power( HOST_PWR_DISABLED );
+
         /* First, check to see if the host is ready to boot by verifying the SD card is *
          * inserted. This only needs to be checked when the OS is on the SD card. If    *
          * the device has an EMMC, this check can be skipped.                           */
@@ -573,12 +590,17 @@ DIGITALDASH_STATUS digitaldash_service( void )
         /* All hardware is present, so the Digital Dash is ready to be powered on.      *
          * Enable power to the host, and begin a timer to make sure the device properly *
          * boots and does not hang.                                                     */
-        else if( digitaldash_get_flag( DD_FLG_HOST_PWR ) == HOST_PWR_DISABLED )
+        else if( (digitaldash_shutdown > 0) &&
+                (digitaldash_get_flag( DD_FLG_HOST_PWR ) == HOST_PWR_DISABLED) ) {
             host_power( HOST_PWR_ENABLED );
+            fan( FAN_MED );
+        }
 
         /* If the application timer expires, reset the hardware                        */
         else if( digitaldash_app_wtchdg <= 0 )
             DigitalDash_PowerCylce();
+        if( (engine_speed->pid_value >= 500) || (engine_speed->timestamp == 0) )
+            digitaldash_shutdown = CAN_BUS_IDLE_TIME;
 
         else {
             /* Service the KE protocol manager */
@@ -683,6 +705,9 @@ void digitaldash_tick( void )
 
     if( digitaldash_bklt_wtchdg > 0 )
         digitaldash_bklt_wtchdg--;
+
+    if( digitaldash_shutdown > 0 )
+        digitaldash_shutdown--;
 
     #ifdef USE_LIB_OBDII
     if( tester_present > 0 ) {
