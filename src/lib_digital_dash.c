@@ -577,8 +577,18 @@ DIGITALDASH_STATUS digitaldash_service( void )
             host_power( HOST_PWR_ENABLED );
 
         /* If the application timer expires, reset the hardware                        */
-        if( digitaldash_app_wtchdg <= 0 )
+        else if( digitaldash_app_wtchdg <= 0 )
             DigitalDash_PowerCylce();
+
+        else {
+            /* Service the KE protocol manager */
+            KE_Service( &rasp_pi );
+
+            #ifdef USE_LIB_OBDII
+            /* Service the OBDII protocol manager */
+            OBDII_Service( &obdii );
+            #endif
+        }
 
 		#ifdef BKLT_CTRL_ACTIVE
         /* Turn off the LCD if no messages are received by LCD_BKLT_TIMEOUT */
@@ -614,14 +624,6 @@ DIGITALDASH_STATUS digitaldash_service( void )
             #endif
         }
 		#endif
-
-        /* Service the KE protocol manager */
-        KE_Service( &rasp_pi );
-
-        #ifdef USE_LIB_OBDII
-        /* Service the OBDII protocol manager */
-        OBDII_Service( &obdii );
-        #endif
 
         return DIGITALDASH_OK;
     }
