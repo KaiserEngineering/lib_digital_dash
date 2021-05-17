@@ -599,8 +599,6 @@ DIGITALDASH_STATUS digitaldash_service( void )
         /* If the application timer expires, reset the hardware                        */
         else if( digitaldash_app_wtchdg <= 0 )
             DigitalDash_PowerCylce();
-        if( (engine_speed->pid_value >= 500) || (engine_speed->timestamp == 0) )
-            digitaldash_shutdown = CAN_BUS_IDLE_TIME;
 
         else {
             /* Service the KE protocol manager */
@@ -611,6 +609,9 @@ DIGITALDASH_STATUS digitaldash_service( void )
             OBDII_Service( &obdii );
             #endif
         }
+
+        if( (engine_speed->pid_value >= 500) || (engine_speed->timestamp == 0) )
+            digitaldash_shutdown = CAN_BUS_IDLE_TIME;
 
 		#ifdef BKLT_CTRL_ACTIVE
         /* Turn off the LCD if no messages are received by LCD_BKLT_TIMEOUT */
