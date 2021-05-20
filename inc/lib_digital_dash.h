@@ -115,6 +115,7 @@ typedef enum _sd_card_state {
 ********************************************************************/
 typedef enum _host_pwr_state {
     HOST_PWR_DISABLED,
+    HOST_PWR_SLEEP,
     HOST_PWR_ENABLED
 } HOST_PWR_STATE, *PHOST_PWR_STATE;
 

@@ -532,10 +532,14 @@ static void host_power( HOST_PWR_STATE host_state )
         /* Indicate the new state of the host */
         update_app_flag( DD_USB_PWR, USB_PWR_ENABLED );
 #else
-        usb( host_state );
-
-        /* Indicate the new state of the host */
-        update_app_flag( DD_USB_PWR, host_state );
+        if( host_state == HOST_PWR_ENABLED ) {
+            usb( USB_PWR_ENABLED );
+            update_app_flag( DD_USB_PWR, USB_PWR_ENABLED );
+        }
+        else {
+            usb( USB_PWR_DISABLED );
+            update_app_flag( DD_USB_PWR, USB_PWR_DISABLED );
+        }
 #endif
 
         /* Enable or disable power */
@@ -573,11 +577,11 @@ DIGITALDASH_STATUS digitaldash_service( void )
         /* If a delay was requested by the Digital Dash application, block all other functions *
          * until the delay is complete. This will NOT block any other application code         */
         if( digitaldash_delay > 0 ) { /* Do nothing */ }
-        
+
         /* Turn off the host */
         else if( (digitaldash_shutdown <= 0) &&
                 (digitaldash_get_flag( DD_FLG_HOST_PWR ) == HOST_PWR_ENABLED) )
-            host_power( HOST_PWR_DISABLED );
+            host_power( HOST_PWR_SLEEP );
 
         /* First, check to see if the host is ready to boot by verifying the SD card is *
          * inserted. This only needs to be checked when the OS is on the SD card. If    *
