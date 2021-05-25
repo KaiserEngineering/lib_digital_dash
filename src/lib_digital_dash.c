@@ -611,8 +611,11 @@ DIGITALDASH_STATUS digitaldash_service( void )
             OBDII_Service( &obdii );
             #endif
         }
-
+#ifdef DEBUG
         if( (engine_speed->pid_value >= 500) || (engine_speed->timestamp == 0) )
+#else
+        if( (engine_speed->pid_value >= 500) )
+#endif
             digitaldash_shutdown = CAN_BUS_IDLE_TIME;
 
 		#ifdef BKLT_CTRL_ACTIVE
