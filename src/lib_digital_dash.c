@@ -92,7 +92,7 @@ static volatile uint32_t digitaldash_app_wtchdg = 0xFFFFFFFF;
 static volatile uint32_t digitaldash_bklt_wtchdg = 0xFFFFFFFF;
 
 /* Timer to shutdown the Digital Dash */
-static volatile uint32_t digitaldash_shutdown = 300000;
+static volatile uint32_t digitaldash_shutdown = 900000;
 
 /* Timer to re-enable any communication that would effect a test device */
 static volatile uint32_t tester_present = 0;
@@ -611,11 +611,8 @@ DIGITALDASH_STATUS digitaldash_service( void )
             OBDII_Service( &obdii );
             #endif
         }
-#ifdef DEBUG
-        if( (engine_speed->pid_value >= 500) || (engine_speed->timestamp == 0) )
-#else
+
         if( (engine_speed->pid_value >= 500) )
-#endif
             digitaldash_shutdown = CAN_BUS_IDLE_TIME;
 
 		#ifdef BKLT_CTRL_ACTIVE
