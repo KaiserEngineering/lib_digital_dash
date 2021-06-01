@@ -42,7 +42,7 @@
 #define CAN_FILT_ACTIVE
 #endif
 
-#define POWER_CYCLE_TIME 1000
+#define POWER_CYCLE_TIME 5000
 #define BKLT_CTRL_ACTIVE
 #define FORD_MAX_BRIGHTNESS 31
 #define FORD_MIN_BRIGHTNESS 1
@@ -52,7 +52,9 @@
 
 #define TESTER_PRESENT_DELAY 10000
 
-#define FORCE_USB_ON     1
+#define CAN_BUS_IDLE_TIME 10000
+
+#define FORCE_USB_ON     0
 
 #define DD_MAX_PIDS 25
 
@@ -78,7 +80,7 @@ typedef enum _ecu_comm {
 /********************************************************************
 * OS Configuration                                                  *
 ********************************************************************/
-#define OS_BOOT_TIME_MAX 50000
+#define OS_BOOT_TIME_MAX 600000 // Reboot after 10min
 #define OS_FRAME_TIMEOUT 50000
 
 #endif
@@ -113,6 +115,7 @@ typedef enum _sd_card_state {
 ********************************************************************/
 typedef enum _host_pwr_state {
     HOST_PWR_DISABLED,
+    HOST_PWR_SLEEP,
     HOST_PWR_ENABLED
 } HOST_PWR_STATE, *PHOST_PWR_STATE;
 
