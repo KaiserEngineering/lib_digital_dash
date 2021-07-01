@@ -65,6 +65,11 @@ static OBDII_PACKET_MANAGER obdii;
 static CAN_SNIFFER_PACKET_MANAGER sniffer;
 #endif
 
+#ifdef LIB_VEHICLE_DATA_H
+/* Declare a Vehicle Data packet manager */
+static VEHICLE_DATA_MANAGER vehicle;
+#endif
+
 /* Configure the Digital Dash to sync the backlight with the vehicle's lighting */
 #if defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)
 static PID_DATA gauge_brightness_req = { .pid = SNIFF_GAUGE_BRIGHTNESS, .mode = SNIFF, .pid_unit = PID_UNITS_PERCENT, .pid_value = 100 };
@@ -254,6 +259,14 @@ static PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 		return ptr;
 	}
 	#endif
+
+    #ifdef USE_LIB_VEHICLE_DATA
+    /* Service the Vehicle Data manager */
+    if( Vehicle_add_parameter( &vehicle, ptr ) == VEHICLE_DATA_OK ) {
+        ptr->acquisition_type = PID_ASSIGNED_TO_VEHICLE_DATA;
+        return ptr;
+    }
+    #endif
 
 	#ifdef LIB_OBDII_H_
 	/* Add the PID to the OBDII stream if supported */
@@ -509,6 +522,13 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     CAN_Sniffer_Initialize(&sniffer);
     #endif
 
+    vehicle.req_pid   = &DigitalDash_Add_PID_To_Stream;        /* Function call to request a PID */
+    vehicle.clear_pid = &DigitalDash_Remove_PID_From_Stream;   /* Function call to remove a PID */
+
+    #ifdef LIB_VEHICLE_DATA_H
+    Vehicle_Init( &vehicle );
+    #endif
+
     #if defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)
     /* Start obtaining the gauge brightness */
     gauge_brightness = DigitalDash_Add_PID_To_Stream( &gauge_brightness_req );
@@ -609,6 +629,11 @@ DIGITALDASH_STATUS digitaldash_service( void )
             #ifdef USE_LIB_OBDII
             /* Service the OBDII protocol manager */
             OBDII_Service( &obdii );
+            #endif
+
+            #ifdef USE_LIB_VEHICLE_DATA
+            /* Service the Vehicle Data manager */
+            Vehicle_service( &vehicle );
             #endif
         }
 
@@ -737,5 +762,9 @@ void digitaldash_tick( void )
 
     #ifdef USE_LIB_CAN_BUS_SNIFFER
     CAN_Sniffer_tick();
+    #endif
+
+    #ifdef USE_LIB_VEHICLE_DATA
+    Vehicle_tick();
     #endif
 }

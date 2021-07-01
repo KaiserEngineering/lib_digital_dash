@@ -98,6 +98,10 @@ typedef enum _ecu_comm {
 #endif
 #endif
 
+#ifdef USE_LIB_VEHICLE_DATA
+#include "lib_vehicle_data.h"
+#endif
+
 #include "lib_pid.h"
 
 #define null 0
