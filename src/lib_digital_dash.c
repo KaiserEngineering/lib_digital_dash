@@ -180,6 +180,11 @@ static int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
                         break;
                     #endif
 
+                    #ifdef LIB_VEHICLE_DATA_H
+                        /* Remove the PID from the Vehicle stream */
+                        Vehicle_remove_PID_request( &vehicle, pid );
+                    #endif
+
                     default:
                         break;
                 }
