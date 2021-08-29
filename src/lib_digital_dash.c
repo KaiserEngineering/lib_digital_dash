@@ -733,14 +733,18 @@ void digitaldash_tick( void )
     if( digitaldash_delay > 0 )
         digitaldash_delay--;
 
+#ifndef SPOOF_DATA
     if( digitaldash_app_wtchdg > 0 )
         digitaldash_app_wtchdg--;
+#endif
 
     if( digitaldash_bklt_wtchdg > 0 )
         digitaldash_bklt_wtchdg--;
 
+#ifndef SPOOF_DATA
     if( digitaldash_shutdown > 0 )
         digitaldash_shutdown--;
+#endif
 
     #ifdef USE_LIB_OBDII
     if( tester_present > 0 ) {
