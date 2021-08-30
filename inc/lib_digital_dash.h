@@ -48,7 +48,7 @@
 #define FORD_MIN_BRIGHTNESS 1
 #define LCD_MAX_BRIGHTNESS 255
 #define LCD_MIN_BRIGHTNESS 20
-#define LCD_BKLT_TIMEOUT 250
+#define LCD_BKLT_TIMEOUT 500
 
 #define TESTER_PRESENT_DELAY 10000
 
@@ -96,6 +96,10 @@ typedef enum _ecu_comm {
 #ifdef FORD_FOCUS_STRS_2013_2018
 #include "lib_CAN_bus_sniffer.h"
 #endif
+#endif
+
+#ifdef USE_LIB_VEHICLE_DATA
+#include "lib_vehicle_data.h"
 #endif
 
 #include "lib_pid.h"
