@@ -257,6 +257,9 @@ static PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 	/* Get the base units */
 	ptr->base_unit = get_pid_base_unit( ptr->mode , ptr->pid );
 
+    /* Get the PID header */
+	ptr->header = get_pid_header( ptr->mode , ptr->pid );
+
 	#ifdef LIB_CAN_BUS_SNIFFER_H_
 	/* Add the PID to the sniffer if supported */
 	if( CAN_Sniffer_Add_PID( &sniffer, ptr ) == PID_SUPPORTED ) {
