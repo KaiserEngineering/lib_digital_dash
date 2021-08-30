@@ -207,7 +207,7 @@ typedef uint8_t (*DD_KE_TX)( uint8_t tx[], uint8_t len );
 
 /* The digital dash will call this function to send a send  *
  * a transmission to the connected ECU                      */
-typedef uint8_t (*DD_ECU_TX)( uint8_t tx[], uint8_t len );
+typedef uint8_t (*DD_ECU_TX)( uint16_t header, uint8_t tx[], uint8_t len );
 
 /* The digital dash will call this function to set the      *
  * backlight brightness                                     */
