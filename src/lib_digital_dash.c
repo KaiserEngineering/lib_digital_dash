@@ -696,6 +696,9 @@ DIGITALDASH_STATUS digitaldash_service( void )
 float engine_rpm = 900;
 float turbo = 0;
 float oil_temp = 0;
+float can_button = 0;
+float baro = 101.4;
+float pid_map = 0;
 #endif
 
 void digitaldash_tick( void )
@@ -727,6 +730,28 @@ void digitaldash_tick( void )
                 stream[i].pid_value = oil_temp;
                 if( oil_temp >= 200 )
                     oil_temp = 0;
+            } else if ( (stream[i].mode == SNIFF) & (stream[i].pid == SNIFF_CRUISE_CONTROL_CAN_BUTTON) )
+            {
+                stream[i].timestamp++;
+                can_button += 1;
+                if( can_button > 200 )
+                    stream[i].pid_value = 1;
+                else
+                    stream[i].pid_value = 0;
+
+                if( can_button > 400 )
+                    can_button = 0;
+            } else if ( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_INTAKE_MANIFOLD_ABSOLUTE_PRESSURE) )
+            {
+                stream[i].timestamp++;
+                pid_map += 0.65;
+                stream[i].pid_value = pid_map;
+                if( pid_map >= 253 )
+                    pid_map = 0;
+            } else if ( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_ABSOLUTE_BAROMETRIC_PRESSURE) )
+            {
+                stream[i].timestamp++;
+                stream[i].pid_value = baro;
             }
         }
     }
