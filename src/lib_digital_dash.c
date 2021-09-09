@@ -151,7 +151,7 @@ static int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
 {
     /* Iterate through every currently streamed PID and check if the *
      * PID is being streamed                                         */
-    for( uint8_t index = 0; index < num_pids; index++ )
+    for( uint8_t index = 0; index < DD_MAX_PIDS; index++ )
     {
         /* If so, return a 1 */
         if( &stream[index] == pid )
@@ -707,7 +707,7 @@ void digitaldash_tick( void )
     spoof_count = (spoof_count + 1) % SPOOF_INTERVAL_T;
     if( spoof_count == 0 )
     {
-        for( uint8_t i = 0; i < num_pids; i++ )
+        for( uint8_t i = 0; i < DD_MAX_PIDS; i++ )
         {
             if( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_ENGINE_SPEED) )
             {
