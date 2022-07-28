@@ -3,7 +3,7 @@
 
 #define FIRMWARE_VERSION_MAJOR  1
 #define FIRMWARE_VERSION_MINOR  0
-#define FIRMWARE_VERSION_HOTFIX 2
+#define FIRMWARE_VERSION_HOTFIX 5
 
 #ifndef DIGITAL_DASH_CONFIG
 
@@ -80,8 +80,8 @@ typedef enum _ecu_comm {
 /********************************************************************
 * OS Configuration                                                  *
 ********************************************************************/
-#define OS_BOOT_TIME_MAX 600000 // Reboot after 10min
-#define OS_FRAME_TIMEOUT 50000
+#define OS_BOOT_TIME_MAX 60000 // Reboot after 1min
+#define OS_FRAME_TIMEOUT 60000
 
 #endif
 

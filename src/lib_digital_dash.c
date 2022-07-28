@@ -97,7 +97,11 @@ static volatile uint32_t digitaldash_app_wtchdg = 0xFFFFFFFF;
 static volatile uint32_t digitaldash_bklt_wtchdg = 0xFFFFFFFF;
 
 /* Timer to shutdown the Digital Dash */
-static volatile uint32_t digitaldash_shutdown = 900000;
+#ifdef ENABLE_WHEN_ENGINE_ON
+static volatile uint32_t digitaldash_shutdown = 60000;
+#else
+static volatile uint32_t digitaldash_shutdown = 60000;
+#endif
 
 /* Timer to re-enable any communication that would effect a test device */
 static volatile uint32_t tester_present = 0;
@@ -124,6 +128,7 @@ DD_USB_CTRL usb                           = null;
 DD_CAN_FILTER filter                      = null;
 
 DIGITALDASH_INIT_STATUS DigitalDash_Config_Null_Check( void );
+static void host_power( HOST_PWR_STATE host_state );
 
 static uint32_t map(uint32_t in, uint32_t inMin, uint32_t inMax, uint32_t outMin, uint32_t outMax)
 {
@@ -616,11 +621,16 @@ DIGITALDASH_STATUS digitaldash_service( void )
             get_sd_card_state();
         #endif
 
+        #ifdef ENABLE_WHEN_ENGINE_ON
+        //else if( engine_speed->pid_value < 500 )
+            //{ /* Do nothing until the engine is on */ }
+        #endif
+
         /* All hardware is present, so the Digital Dash is ready to be powered on.      *
          * Enable power to the host, and begin a timer to make sure the device properly *
          * boots and does not hang.                                                     */
         else if( (digitaldash_shutdown > 0) &&
-                (host_power_state == HOST_PWR_DISABLED) ) {
+                (host_power_state != HOST_PWR_ENABLED) ) {
             host_power( HOST_PWR_ENABLED );
             fan( FAN_MED );
         }
