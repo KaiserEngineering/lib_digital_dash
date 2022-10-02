@@ -100,7 +100,7 @@ static volatile uint32_t digitaldash_bklt_wtchdg = 0xFFFFFFFF;
 #ifdef ENABLE_WHEN_ENGINE_ON
 static volatile uint32_t digitaldash_shutdown = 60000;
 #else
-static volatile uint32_t digitaldash_shutdown = 60000;
+static volatile uint32_t digitaldash_shutdown = 900000;
 #endif
 
 /* Timer to re-enable any communication that would effect a test device */
