@@ -312,10 +312,6 @@ void DigitalDash_Reset_App( void )
 /* Set the LCD brightness if needed */
 static void Update_LCD_Brightness( uint8_t value )
 {
-	/* Verify enough packets have been rx'd */
-	if( ke_uart_count < KE_UART_THRESHOLD )
-		value = 0;
-
     /* Check if the brightness value needs to be update */
     if( Brightness != value )
     {
