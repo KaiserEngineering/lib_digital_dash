@@ -94,7 +94,7 @@ static volatile uint32_t digitaldash_delay = 0;
 static volatile uint32_t digitaldash_app_wtchdg = 0xFFFFFFFF;
 
 /* Timer to disable the LCD backlight if comm. stops. Set to OS_BOOT_TIME_MAX so the LCD is on during boot */
-static volatile uint32_t digitaldash_bklt_wtchdg = OS_BOOT_TIME_MAX;
+static volatile uint32_t digitaldash_bklt_wtchdg = 0x00000000;
 
 /* Timer to shutdown the Digital Dash */
 #ifdef ENABLE_WHEN_ENGINE_ON
@@ -301,7 +301,7 @@ void DigitalDash_Reset_App( void )
     Brightness              = 0x00;
     Set_Brightness          = LCD_MAX_BRIGHTNESS;
     digitaldash_delay       = 0x00000000;
-    digitaldash_bklt_wtchdg = OS_BOOT_TIME_MAX;
+    digitaldash_bklt_wtchdg = 0x00000000;
     digitaldash_app_wtchdg  = 0xFFFFFFFF;
     ke_uart_count           = 0x00000000;
     DigitalDash_Reset_PID_Stream();
@@ -581,6 +581,9 @@ static void host_power( HOST_PWR_STATE host_state )
 
     	   /* Set the boot time if power on */
 		   digitaldash_app_wtchdg = OS_BOOT_TIME_MAX;
+
+		   /* Turn on the LCD to show the splash screen */
+		   digitaldash_bklt_wtchdg = OS_BOOT_TIME_MAX;
        } else {
     	   state = DD_OP_OFF;
        }
