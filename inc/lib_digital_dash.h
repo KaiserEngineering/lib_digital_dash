@@ -1,111 +1,35 @@
 #ifndef LIB_DIGITAL_DASH_H
 #define LIB_DIGITAL_DASH_H
 
-#define FIRMWARE_VERSION_MAJOR  1
-#define FIRMWARE_VERSION_MINOR  0
-#define FIRMWARE_VERSION_HOTFIX 8
+#include "../ke_conf.h"
+#include "stddef.h"
 
-#ifndef DIGITAL_DASH_CONFIG
 
-/********************************************************************
-* Hardware configuration                                            *
-********************************************************************/
-#ifndef SD_CARD_ACTIVE
-#define SD_CARD_ACTIVE
-#endif
-
-#ifndef KE_ACTIVE
-#define KE_ACTIVE
-#endif
-
-#ifndef ECU_ACTIVE
-#define ECU_ACTIVE
-#endif
-
-#ifndef BKLT_CTRL_ACTIVE
-#define BKLT_CTRL_ACTIVE
-#endif
-
-#ifndef FAN_CTRL_ACTIVE
-#define FAN_CTRL_ACTIVE
-#endif
-
-#ifndef HOST_CTRL_ACTIVE
-#define HOST_CTRL_ACTIVE
-#endif
-
-#ifndef USB_CTRL_ACTIVE
-#define USB_CTRL_ACTIVE
-#endif
-
-#ifndef CAN_FILT_ACTIVE
-#define CAN_FILT_ACTIVE
-#endif
-
-#define POWER_CYCLE_TIME 5000
-#define BKLT_CTRL_ACTIVE
-#define FORD_MAX_BRIGHTNESS 31
-#define FORD_MIN_BRIGHTNESS 1
-#define LCD_MAX_BRIGHTNESS 255
-#define LCD_MIN_BRIGHTNESS 20
-#define LCD_BKLT_TIMEOUT 1000
-
-#define TESTER_PRESENT_DELAY 10000
-
-#define CAN_BUS_IDLE_TIME 10000
-
-#define FORCE_USB_ON     0
-
-#define DD_MAX_PIDS 25
-
-/********************************************************************
-* CAN Bus Configuration                                             *
-********************************************************************/
-typedef enum _ecu_comm {
-    ECU_COMM_NOT_AVAILABLE,
-    ECU_COMM_AVAILABLE
-} ECU_COMM, *PECU_COMM;
-
-#define ECU_COMM_AVAL        ECU_COMM_AVAILABLE
-#define ECU_TX_ID            (uint16_t)0x7E0
-#define ECU_RX_ID            (uint16_t)0x7E8
-#define ECU_DLC              (uint8_t)0x08
-#define ECU_TIMEOUT          (uint32_t)1000
-
-/********************************************************************
-* UART Configuration                                                *
-********************************************************************/
-#define KE_MAX_PKT_SIZE      (uint8_t)0x28
-
-/********************************************************************
-* OS Configuration                                                  *
-********************************************************************/
-#define OS_BOOT_TIME_MAX 60000 // Reboot after 1min
-#define OS_FRAME_TIMEOUT 60000
-
-#endif
-
+#if USE_KE_PROTOCOL
 #include "lib_ke_protocol.h"
-#include "lib_unit_conversion.h"
+#endif
 
-#ifdef USE_LIB_OBDII
+#if USE_UNIT_CONVERSION
+#include "lib_unit_conversion.h"
+#endif
+
+#if USE_LIB_OBDII
 #include "lib_obdii.h"
 #endif
 
-#ifdef USE_LIB_CAN_BUS_SNIFFER
-#ifdef FORD_FOCUS_STRS_2013_2018
+#if USE_LIB_CAN_BUS_SNIFFER
 #include "lib_CAN_bus_sniffer.h"
 #endif
-#endif
 
-#ifdef USE_LIB_VEHICLE_DATA
+#if USE_LIB_VEHICLE_DATA
 #include "lib_vehicle_data.h"
 #endif
 
+#if USE_LIB_PID
 #include "lib_pid.h"
+#endif
 
-#define null 0
-
+#if SD_CARD_ACTIVE
 /********************************************************************
 * SD Card detection variables                                       *
 ********************************************************************/
@@ -113,7 +37,9 @@ typedef enum _sd_card_state {
     SD_NOT_PRESENT,
     SD_PRESENT
 } SD_CARD_STATE, *PSD_CARD_STATE;
+#endif
 
+#if HOST_CTRL_ACTIVE
 /********************************************************************
 * Host power enable                                                 *
 ********************************************************************/
@@ -122,7 +48,9 @@ typedef enum _host_pwr_state {
     HOST_PWR_SLEEP,
     HOST_PWR_ENABLED
 } HOST_PWR_STATE, *PHOST_PWR_STATE;
+#endif
 
+#if USB_PWR_CTRL
 /********************************************************************
 * USB power enable                                                 *
 ********************************************************************/
@@ -130,7 +58,9 @@ typedef enum _usb_pwr_state {
     USB_PWR_DISABLED,
     USB_PWR_ENABLED
 } USB_PWR_STATE, *PUSB_PWR_STATE;
+#endif
 
+#if FAN_CTRL_ACTIVE
 /********************************************************************
 * Fan power enable                                                 *
 ********************************************************************/
@@ -140,6 +70,7 @@ typedef enum _fan_pwr_state {
     FAN_MED,
     FAN_MAX
 } FAN_PWR_STATE, *PFAN_PWR_STATE;
+#endif
 
 /********************************************************************
 * Digital Dash Initialization status                                 *
@@ -192,6 +123,7 @@ typedef enum _digitaldash_flags{
 /********************************************************************
 * SD Card detection functions                                       *
 ********************************************************************/
+#if SD_CARD_ACTIVE
 /* The main application shall call this function to indicate *
  * when the SD card state changes                           */
 void dd_update_sd_card_state( SD_CARD_STATE state );
@@ -200,32 +132,47 @@ void dd_update_sd_card_state( SD_CARD_STATE state );
  * current SD card state. The main application shall call    *
  * "dd_update_sd_card_state" when this callback occurs.     */
 typedef void (*DD_GET_SD_CARD_STATE)( void );
+#endif
 
+#if KE_ACTIVE
 /* The digital dash will call this function to send a send  *
 * a transmission to the KE host device                     */
 typedef uint8_t (*DD_KE_TX)( uint8_t tx[], uint8_t len );
+#endif
 
+#if ECU_ACTIVE
 /* The digital dash will call this function to send a send  *
  * a transmission to the connected ECU                      */
 typedef uint8_t (*DD_ECU_TX)( uint8_t tx[], uint8_t len );
+#endif
 
+#if BKLT_CTRL_ACTIVE
 /* The digital dash will call this function to set the      *
  * backlight brightness                                     */
 typedef void (*DD_SET_BACKLIGHT)( uint8_t brightness );
+#endif
 
+#if FAN_CTRL_ACTIVE
 /* The digital dash will call this function to enable the   *
  * fan                                                      */
 typedef void (*DD_FAN_CTRL)( FAN_PWR_STATE state );
+#endif
 
+#if HOST_CTRL_ACTIVE
 /* The digital dash will call this function when the host is *
  * ready to be powered on                                    */
 typedef void (*DD_HOST_CTRL)( HOST_PWR_STATE state );
+#endif
 
+#if USB_PWR_CTRL
 /* The digital dash will call this function when USB power   *
  * should be powered on                                      */
 typedef void (*DD_USB_CTRL)( USB_PWR_STATE state );
+#endif
 
+#if HW_CAN_FILTERS
 typedef void (*DD_CAN_FILTER)( uint16_t id );
+#endif
 
 typedef enum _digitaldash_init_status {
     DIGITALDASH_INIT_ERROR,
@@ -266,38 +213,54 @@ typedef enum _digitaldash_status {
 
 typedef struct _digitaldash_config {
 
+#if SD_CARD_ACTIVE
     /* The digital dash will call this function to get the      *
     * current SD card state. The main application shall call    *
     * "dd_update_sd_card_state" when this callback occurs.      */
     DD_GET_SD_CARD_STATE dd_get_sd_card_state;
+#endif
 
+#if KE_ACTIVE
     /* The digital dash will call this function to send a send  *
     * a transmission to the KE host device                      */
     DD_KE_TX dd_ke_tx;
+#endif
 
+#if ECU_ACTIVE
     /* The digital dash will call this function to send a send  *
     * a transmission to the connected ECU                       */
     DD_ECU_TX dd_ecu_tx;
+#endif
 
+#if BKLT_CTRL_ACTIVE
     /* The digital dash will call this function to set the      *
     * backlight brightness                                      */
     DD_SET_BACKLIGHT dd_set_backlight;
+#endif
 
+#if FAN_CTRL_ACTIVE
     /* The digital dash will call this function to enable the   *
     * fan                                                       */
     DD_FAN_CTRL dd_fan_ctrl;
+#endif
 
+#if HOST_CTRL_ACTIVE
     /* The digital dash will call this function when the host is *
     * ready to be powered on                                     */
     DD_HOST_CTRL dd_host_ctrl;
+#endif
 
+#if USB_PWR_CTRL
     /* The digital dash will call this function when USB power   *
      * should be powered on                                      */
     DD_USB_CTRL dd_usb;
+#endif
 
+#if HW_CAN_FILTERS
     /* The digital dash will call this function when a new CAN   *
      * bus filter is needed                                      */
     DD_CAN_FILTER dd_filter;
+#endif
 
 } DIGITALDASH_CONFIG, *PDIGITALDASH_CONFIG;
 
@@ -318,6 +281,7 @@ uint8_t digitaldash_get_flag( DIGITALDASH_FLAG flag );
 void digitaldash_tick( void );
 
 void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data );
+
 void DigitalDash_Add_UART_byte( uint8_t byte );
 
 #ifdef TEST

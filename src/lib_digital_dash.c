@@ -52,7 +52,7 @@ static volatile DIGITALDASH_OPERATING_STATE state = DD_OP_OFF;
 
 #ifdef LIB_KE_PROTOCOL_H_
 /* Declare a KE packet manager */
-static KE_PACKET_MANAGER rasp_pi;
+static KE_PACKET_MANAGER host;
 #endif
 
 #ifdef LIB_OBDII_H_
@@ -112,22 +112,38 @@ static volatile uint32_t tester_present = 0;
 /* Number of packets rx'd from the host */
 static uint32_t ke_uart_count = 0;
 
-#ifdef SPOOF_DATA
+#if SPOOF_DATA
 #define SPOOF_INTERVAL_T      25 // ms
 static uint32_t spoof_count = 0;
 #endif
 
 /* Application callbacks */
-DD_GET_SD_CARD_STATE get_sd_card_state    = null;
-DD_KE_TX ke_tx                            = null;
-DD_ECU_TX ecu_tx                          = null;
-DD_SET_BACKLIGHT set_backlight            = null;
-DD_FAN_CTRL fan                           = null;
-DD_HOST_CTRL host                         = null;
-DD_USB_CTRL usb                           = null;
-DD_CAN_FILTER filter                      = null;
+#if SD_CARD_ACTIVE
+DD_GET_SD_CARD_STATE get_sd_card_state    = NULL;
+#endif
+#if KE_ACTIVE
+DD_KE_TX ke_tx                            = NULL;
+#endif
+#if ECU_ACTIVE
+DD_ECU_TX ecu_tx                          = NULL;
+#endif
+#if BKLT_CTRL_ACTIVE
+DD_SET_BACKLIGHT set_backlight            = NULL;
+#endif
+#if FAN_CTRL_ACTIVE
+DD_FAN_CTRL fan                           = NULL;
+#endif
+#if HOST_CTRL_ACTIVE
+DD_HOST_CTRL host                         = NULL;
+#endif
+#if USB_PWR_CTRL
+DD_USB_CTRL usb                           = NULL;
+#endif
+#if HW_CAN_FILTERS
+DD_CAN_FILTER filter                      = NULL;
+#endif
 
-DIGITALDASH_INIT_STATUS DigitalDash_Config_Null_Check( void );
+DIGITALDASH_INIT_STATUS DigitalDash_Config_NULL_Check( void );
 static void host_power( HOST_PWR_STATE host_state );
 
 static uint32_t map(uint32_t in, uint32_t inMin, uint32_t inMax, uint32_t outMin, uint32_t outMax)
@@ -305,7 +321,7 @@ void DigitalDash_Reset_App( void )
     digitaldash_app_wtchdg  = 0xFFFFFFFF;
     ke_uart_count           = 0x00000000;
     DigitalDash_Reset_PID_Stream();
-    DigitalDash_Config_Null_Check();
+    DigitalDash_Config_NULL_Check();
 }
 
 #ifdef BKLT_CTRL_ACTIVE
@@ -350,12 +366,14 @@ static void update_app_flag( DIGITALDASH_FLAG flag, uint8_t value )
         BITCLEAR( app_flags, flag);
 }
 
+#if SD_CARD_ACTIVE
 /* The main application shall call this function to indicate *
  * when the SD card state changes                            */
 void dd_update_sd_card_state( SD_CARD_STATE state )
 {
     update_app_flag( DD_FLG_SD_CARD, state );
 }
+#endif
 
 /* Return the Digital Dash application flags */
 uint32_t digitaldash_get_app_flags( void )
@@ -383,7 +401,7 @@ void DigitalDash_Add_UART_byte( uint8_t byte )
 
 	#ifdef LIB_KE_PROTOCOL_H_
     /* Add the UART byte to the KE packet manager */
-    KE_Add_UART_Byte( &rasp_pi, byte );
+    KE_Add_UART_Byte( &host, byte );
 	#endif
 }
 
@@ -416,31 +434,49 @@ void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data )
 /* Callback to request active cooling, right now this is configured *
  * as a pass-through callback to main. But, logic can be added in   *
  * the future if desired.                                           */
-void active_cooling( uint8_t level ) { fan( level ); }
+void active_cooling( uint8_t level ) {
+#if FAN_CTRL_ACTIVE
+	fan( level );
+#endif
+}
 
-DIGITALDASH_INIT_STATUS DigitalDash_Config_Null_Check( void )
+DIGITALDASH_INIT_STATUS DigitalDash_Config_NULL_Check( void )
 {
     /* Clear the initialized flag */
     update_app_flag( DD_FLG_INIT, DD_NOT_INITIALIZED );
 
-    if( get_sd_card_state == null )
+#if SD_CARD_ACTIVE
+    if( get_sd_card_state == NULL )
         return DIGITALDASH_INIT_SD_PTR_ERROR;
-    if( ke_tx == null )
+#endif
+#if KE_ACTIVE
+    if( ke_tx == NULL )
         return DIGITALDASH_INIT_KE_PTR_ERROR;
-    if( ecu_tx == null )
+#endif
+#if ECU_ACTIVE
+    if( ecu_tx == NULL )
         return DIGITALDASH_INIT_ECU_PTR_ERROR;
-	#ifdef BKLT_CTRL_ACTIVE
-    if( set_backlight == null )
+#endif
+#if BKLT_CTRL_ACTIVE
+    if( set_backlight == NULL )
         return DIGITALDASH_INIT_BKLT_PTR_ERROR;
-	#endif
-    if( fan == null )
+#endif
+#if FAN_CTRL_ACTIVE
+    if( fan == NULL )
         return DIGITALDASH_INIT_FAN_PTR_ERROR;
-    if( host == null )
+#endif
+#if HOST_CTRL_ACTIVE
+    if( host == NULL )
         return DIGITALDASH_INIT_HOST_PTR_ERROR;
-    if( usb == null )
+#endif
+#if USB_PWR_CTRL
+    if( usb == NULL )
         return DIGITALDASH_INIT_USB_PTR_ERROR;
-    if( filter == null )
+#endif
+#if HW_CAN_FILTERS
+    if( filter == NULL )
         return DIGITALDASH_INIT_CAN_FILT_PTR_ERROR;
+#endif
 
     /* Set the intialized flag */
     update_app_flag( DD_FLG_INIT, DD_INITIALIZED );
@@ -456,68 +492,70 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     /* Clear the initialized flag */
     update_app_flag( DD_FLG_INIT, DD_NOT_INITIALIZED );
 
-#ifdef SD_CARD_ACTIVE
-    if( config->dd_get_sd_card_state == null )
+#if SD_CARD_ACTIVE
+    if( config->dd_get_sd_card_state == NULL )
         return DIGITALDASH_INIT_SD_PTR_ERROR;
     get_sd_card_state = config->dd_get_sd_card_state;
 #endif
 
-#ifdef KE_ACTIVE
-    if( config->dd_ke_tx == null )
+#if KE_ACTIVE
+    if( config->dd_ke_tx == NULL )
         return DIGITALDASH_INIT_KE_PTR_ERROR;
     ke_tx = config->dd_ke_tx;
 #endif
 
-#ifdef ECU_ACTIVE
-    if( config->dd_ecu_tx == null )
+#if ECU_ACTIVE
+    if( config->dd_ecu_tx == NULL )
         return DIGITALDASH_INIT_ECU_PTR_ERROR;
     ecu_tx = config->dd_ecu_tx;
 #endif
 
-#ifdef BKLT_CTRL_ACTIVE
-    if( config->dd_set_backlight == null )
+#if BKLT_CTRL_ACTIVE
+    if( config->dd_set_backlight == NULL )
         return DIGITALDASH_INIT_BKLT_PTR_ERROR;
     set_backlight = config->dd_set_backlight;
 #endif
 
-#ifdef FAN_CTRL_ACTIVE
-    if( config->dd_fan_ctrl == null )
+#if FAN_CTRL_ACTIVE
+    if( config->dd_fan_ctrl == NULL )
         return DIGITALDASH_INIT_FAN_PTR_ERROR;
     fan = config->dd_fan_ctrl;
 #endif
 
-#ifdef HOST_CTRL_ACTIVE
-    if( config->dd_host_ctrl == null )
+#if HOST_CTRL_ACTIVE
+    if( config->dd_host_ctrl == NULL )
         return DIGITALDASH_INIT_HOST_PTR_ERROR;
     host = config->dd_host_ctrl;
 #endif
 
-#ifdef USB_CTRL_ACTIVE
-    if( config->dd_usb == null )
+#if USB_CTRL_ACTIVE
+    if( config->dd_usb == NULL )
         return DIGITALDASH_INIT_USB_PTR_ERROR;
     usb = config->dd_usb;
 #endif
 
-#ifdef CAN_FILT_ACTIVE
-    if( config->dd_filter == null )
+#if CAN_FILT_ACTIVE
+    if( config->dd_filter == NULL )
         return DIGITALDASH_INIT_CAN_FILT_PTR_ERROR;
     filter = config->dd_filter;
 #endif
 
+#if USE_KE_PROTOCOL
     /* lib_ke_protocol initialization */
-    rasp_pi.init.transmit  = ke_tx;                                 /* Function call to transmit UART data to the host */
-    rasp_pi.init.req_pid   = &DigitalDash_Add_PID_To_Stream;        /* Function call to request a PID */
-    rasp_pi.init.clear_pid = &DigitalDash_Remove_PID_From_Stream;   /* Function call to remove a PID */
-    rasp_pi.init.cooling   = &active_cooling;                       /* Function call to request active cooling */
-    rasp_pi.init.firmware_version_major  = FIRMWARE_VERSION_MAJOR;  /* Major firmware version */
-    rasp_pi.init.firmware_version_minor  = FIRMWARE_VERSION_MINOR;  /* Minor firmware version */
-    rasp_pi.init.firmware_version_hotfix = FIRMWARE_VERSION_HOTFIX; /* Hot fix firmware version */
+    host.init.transmit  = ke_tx;                                 /* Function call to transmit UART data to the host */
+    host.init.req_pid   = &DigitalDash_Add_PID_To_Stream;        /* Function call to request a PID */
+    host.init.clear_pid = &DigitalDash_Remove_PID_From_Stream;   /* Function call to remove a PID */
+    host.init.cooling   = &active_cooling;                       /* Function call to request active cooling */
+    host.init.firmware_version_major  = FIRMWARE_VERSION_MAJOR;  /* Major firmware version */
+    host.init.firmware_version_minor  = FIRMWARE_VERSION_MINOR;  /* Minor firmware version */
+    host.init.firmware_version_hotfix = FIRMWARE_VERSION_HOTFIX; /* Hot fix firmware version */
 
     /* Initialize the KE library */
-    if( KE_Initialize( &rasp_pi ) != KE_OK )
+    if( KE_Initialize( &host ) != KE_OK )
         return DIGITALDASH_INIT_KE_INIT_ERROR;
+#endif
 
-    #ifdef LIB_OBDII_H_
+#if USE_LIB_OBDII
     /* lib_obdii initialization */
     obdii.init.transmit       = ecu_tx;               /* Function call to transmit OBDII data to the vehicle */
     obdii.init.timeout        = ECU_TIMEOUT;          /* Time(ms) before lib_obdii will retry a transmission */
@@ -526,29 +564,29 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
 
     /* Initialize the OBDII library */
     OBDII_Initialize( &obdii );
-    #endif
+#endif
 
-    #ifdef USE_LIB_CAN_BUS_SNIFFER
+#if USE_LIB_CAN_BUS_SNIFFER
     /* lib_can_bus_sniffer initialization */
     sniffer.filter = filter;
     CAN_Sniffer_Initialize(&sniffer);
-    #endif
+#endif
 
+#if USE_LIB_VEHICLE_DATA
     vehicle.req_pid   = &DigitalDash_Add_PID_To_Stream;        /* Function call to request a PID */
     vehicle.clear_pid = &DigitalDash_Remove_PID_From_Stream;   /* Function call to remove a PID */
 
-    #ifdef LIB_VEHICLE_DATA_H
     Vehicle_Init( &vehicle );
-    #endif
+#endif
 
-    #if defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)
+#if defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)
     /* Start obtaining the gauge brightness */
     gauge_brightness = DigitalDash_Add_PID_To_Stream( &gauge_brightness_req );
-    #endif
+#endif
 
-    #if defined(MODE1_ENGINE_SPEED_SUPPORTED) || !defined(LIMIT_PIDS)
+#if defined(MODE1_ENGINE_SPEED_SUPPORTED) || !defined(LIMIT_PIDS)
     engine_speed = DigitalDash_Add_PID_To_Stream( &engine_speed_req );
-    #endif
+#endif
 
     /* Set the initialized flag */
     update_app_flag( DD_FLG_INIT, DD_INITIALIZED );
@@ -560,6 +598,7 @@ static void host_power( HOST_PWR_STATE host_state )
 {
     if( host_power_state != host_state )
     {
+#if USB_PWR_CTRL
 #if FORCE_USB_ON
         usb( USB_PWR_ENABLED );
 
@@ -571,9 +610,12 @@ static void host_power( HOST_PWR_STATE host_state )
         else
             usb( USB_PWR_DISABLED );
 #endif
+#endif
 
+#if HOST_CTRL_ACTIVE
         /* Enable or disable power */
         host( host_state );
+#endif
 
         /* Indicate the new state of the host */
         host_power_state = host_state;
@@ -611,20 +653,21 @@ DIGITALDASH_STATUS digitaldash_service( void )
         /* Turn off the host */
         else if( (digitaldash_shutdown <= 0) &&
                 (host_power_state == HOST_PWR_ENABLED) )
+        {
+#if SAFE_SHUTDOWN
             host_power( HOST_PWR_SLEEP );
+#else
+        	host_power( HOST_PWR_DISABLED );
+#endif
+        }
 
+#if SD_CARD_ACTIVE
         /* First, check to see if the host is ready to boot by verifying the SD card is *
          * inserted. This only needs to be checked when the OS is on the SD card. If    *
          * the device has an EMMC, this check can be skipped.                           */
-        #ifdef SD_CARD_ACTIVE
         else if( digitaldash_get_flag( DD_FLG_SD_CARD ) == SD_NOT_PRESENT )
             get_sd_card_state();
-        #endif
-
-        #ifdef ENABLE_WHEN_ENGINE_ON
-        //else if( engine_speed->pid_value < 500 )
-            //{ /* Do nothing until the engine is on */ }
-        #endif
+#endif
 
         /* All hardware is present, so the Digital Dash is ready to be powered on.      *
          * Enable power to the host, and begin a timer to make sure the device properly *
@@ -632,7 +675,9 @@ DIGITALDASH_STATUS digitaldash_service( void )
         else if( (digitaldash_shutdown > 0) &&
                 (host_power_state != HOST_PWR_ENABLED) ) {
             host_power( HOST_PWR_ENABLED );
+#if FAN_CTRL_ACTIVE
             fan( FAN_MED );
+#endif
         }
 
         /* If the application timer expires, reset the hardware                        */
@@ -640,24 +685,26 @@ DIGITALDASH_STATUS digitaldash_service( void )
             DigitalDash_PowerCylce();
 
         else {
+#if USE_KE_PROTOCOL
             /* Service the KE protocol manager */
-            KE_Service( &rasp_pi );
+            KE_Service( &host );
+#endif
 
-            #ifdef USE_LIB_OBDII
+#if USE_LIB_OBDII
             /* Service the OBDII protocol manager */
             OBDII_Service( &obdii );
-            #endif
+#endif
 
-            #ifdef USE_LIB_VEHICLE_DATA
+#if USE_LIB_VEHICLE_DATA
             /* Service the Vehicle Data manager */
             Vehicle_service( &vehicle );
-            #endif
+#endif
         }
 
         if( (engine_speed->pid_value >= 500) )
-            digitaldash_shutdown = CAN_BUS_IDLE_TIME;
+            digitaldash_shutdown = ENGINE_OFF_SHUTDOWN_TIME;
 
-		#ifdef BKLT_CTRL_ACTIVE
+#if BKLT_CTRL_ACTIVE
         /* Turn off the LCD if no messages are received by LCD_BKLT_TIMEOUT */
         if( digitaldash_bklt_wtchdg <= 0 )
         {
@@ -666,7 +713,7 @@ DIGITALDASH_STATUS digitaldash_service( void )
 
             Update_LCD_Brightness(0);
         } else {
-            #if defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)
+#if defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)
             /* TODO - Adjustments may be needed with real world testing */
             /* Map the gauge brightness to the LCD driver */
             uint32_t brightness_adjusted = map( gauge_brightness->pid_value,
@@ -686,11 +733,11 @@ DIGITALDASH_STATUS digitaldash_service( void )
                 brightness_adjusted = LCD_MAX_BRIGHTNESS;
 
             Update_LCD_Brightness( brightness_adjusted );
-            #else
+#else
             Update_LCD_Brightness( LCD_MAX_BRIGHTNESS );
-            #endif
+#endif
         }
-		#endif
+#endif
 
         return DIGITALDASH_OK;
     }
@@ -702,7 +749,7 @@ DIGITALDASH_STATUS digitaldash_service( void )
     }
 }
 
-#ifdef SPOOF_DATA
+#if SPOOF_DATA
 float engine_rpm = 900;
 float turbo = 0;
 float oil_temp = 0;
@@ -713,7 +760,7 @@ float pid_map = 0;
 
 void digitaldash_tick( void )
 {
-    #ifdef SPOOF_DATA
+    #if SPOOF_DATA
     spoof_count = (spoof_count + 1) % SPOOF_INTERVAL_T;
     if( spoof_count == 0 )
     {
