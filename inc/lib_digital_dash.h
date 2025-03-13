@@ -284,6 +284,8 @@ void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data );
 
 void DigitalDash_Add_UART_byte( uint8_t byte );
 
+PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid );
+
 #ifdef TEST
 void KE_Flag_Callback( uint16_t flag, uint8_t bit );
 #endif

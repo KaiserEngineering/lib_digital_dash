@@ -50,22 +50,22 @@ static volatile uint32_t app_flags = 0;
 /* Current state of the Digital Dash */
 static volatile DIGITALDASH_OPERATING_STATE state = DD_OP_OFF;
 
-#ifdef LIB_KE_PROTOCOL_H_
+#if USE_KE_PROTOCOL
 /* Declare a KE packet manager */
 static KE_PACKET_MANAGER host;
 #endif
 
-#ifdef LIB_OBDII_H_
+#if USE_LIB_OBDII
 /* Declare an OBDII packet manager */
 static OBDII_PACKET_MANAGER obdii;
 #endif
 
-#ifdef LIB_CAN_BUS_SNIFFER_H_
+#if USE_LIB_CAN_BUS_SNIFFER
 /* Declare a CAN Bus sniffer packet manager */
 static CAN_SNIFFER_PACKET_MANAGER sniffer;
 #endif
 
-#ifdef LIB_VEHICLE_DATA_H
+#if USE_LIB_VEHICLE_DATA
 /* Declare a Vehicle Data packet manager */
 static VEHICLE_DATA_MANAGER vehicle;
 #endif
@@ -156,6 +156,8 @@ static void DigitalDash_Reset_PID( PTR_PID_DATA pid )
     pid->acquisition_type = PID_UNASSIGNED;
     pid->pid_value        = 0;
     pid->timestamp        = 0;
+    pid->pid_min          = 0;
+    pid->pid_max          = 0;
 }
 
 /* Clear ALL of the PIDs, this should only be called when the *
@@ -187,21 +189,21 @@ static int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
             {
                 switch( stream[index].acquisition_type )
                 {
-                    #ifdef LIB_CAN_BUS_SNIFFER_H_
+                    #if USE_LIB_CAN_BUS_SNIFFER
                     /* Remove the PID to the sniffer if supported */
                     case PID_ASSIGNED_TO_CAN_SNIFFER:
                         CAN_Sniffer_Remove_PID( &sniffer, pid );
                         break;
                     #endif
 
-                    #ifdef LIB_OBDII_H_
+                    #if USE_LIB_OBDII
                     /* Remove the PID to the OBDII stream if supported */
                     case PID_ASSIGNED_TO_OBDII:
                         OBDII_remove_PID_request( &obdii, pid );
                         break;
                     #endif
 
-                    #ifdef LIB_VEHICLE_DATA_H
+                    #if USE_LIB_VEHICLE_DATA
                     /* Remove the PID from the Vehicle stream */
                     case PID_ASSIGNED_TO_VEHICLE_DATA:
                         Vehicle_remove_PID_request( &vehicle, pid );
@@ -235,7 +237,7 @@ static int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
  * pointer and update the value any time it has new data.            *
  * Lib_digital_dash will also be required to track the number of     *
  * requesters per PID to ensure no stream gets cut prematurely.      */
-static PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
+PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 {
 	/* Declare a NULL pointer */
 	PTR_PID_DATA ptr = NULL;
@@ -248,9 +250,14 @@ static PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 	        break;
 	}
 
+    // Check if we exceeded max PIDs
+    if (slot >= DD_MAX_PIDS) {
+        return NULL;  // No space available
+    }
+
 	/* Iterate through every currently streamed PID and check if the *
 	 * PID is being streamed                                         */
-	for( uint8_t i = 0; i <= num_pids; i++ )
+	for( uint8_t i = 0; i < num_pids; i++ )
 	{
 		/* If so, return the pointer */
 		if( stream[i].pid == pid->pid  &&
@@ -280,7 +287,7 @@ static PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 	/* Get the base units */
 	ptr->base_unit = get_pid_base_unit( ptr->mode , ptr->pid );
 
-	#ifdef LIB_CAN_BUS_SNIFFER_H_
+	#if USE_LIB_CAN_BUS_SNIFFER
 	/* Add the PID to the sniffer if supported */
 	if( CAN_Sniffer_Add_PID( &sniffer, ptr ) == PID_SUPPORTED ) {
 		ptr->acquisition_type = PID_ASSIGNED_TO_CAN_SNIFFER;
@@ -288,7 +295,7 @@ static PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 	}
 	#endif
 
-    #ifdef USE_LIB_VEHICLE_DATA
+    #if USE_LIB_VEHICLE_DATA
     /* Service the Vehicle Data manager */
     if( Vehicle_add_parameter( &vehicle, ptr ) == VEHICLE_DATA_OK ) {
         ptr->acquisition_type = PID_ASSIGNED_TO_VEHICLE_DATA;
@@ -296,7 +303,7 @@ static PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
     }
     #endif
 
-	#ifdef LIB_OBDII_H_
+	#if USE_LIB_OBDII
 	/* Add the PID to the OBDII stream if supported */
 	if( OBDII_add_PID_request( &obdii, ptr ) == OBDII_OK ) {
 		ptr->acquisition_type = PID_ASSIGNED_TO_OBDII;
@@ -328,9 +335,11 @@ void DigitalDash_Reset_App( void )
 /* Set the LCD brightness if needed */
 static void Update_LCD_Brightness( uint8_t value )
 {
+#if USE_KE_PROTOCOL
 	/* Verify enough packets have been rx'd */
 	if( ke_uart_count < KE_UART_THRESHOLD )
 		value = 0;
+#endif
 
     /* Check if the brightness value needs to be update */
     if( Brightness != value )
@@ -534,7 +543,7 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     usb = config->dd_usb;
 #endif
 
-#if CAN_FILT_ACTIVE
+#if HW_CAN_FILTERS
     if( config->dd_filter == NULL )
         return DIGITALDASH_INIT_CAN_FILT_PTR_ERROR;
     filter = config->dd_filter;
@@ -581,11 +590,11 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
 
 #if defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)
     /* Start obtaining the gauge brightness */
-    gauge_brightness = DigitalDash_Add_PID_To_Stream( &gauge_brightness_req );
+    //gauge_brightness = DigitalDash_Add_PID_To_Stream( &gauge_brightness_req );
 #endif
 
 #if defined(MODE1_ENGINE_SPEED_SUPPORTED) || !defined(LIMIT_PIDS)
-    engine_speed = DigitalDash_Add_PID_To_Stream( &engine_speed_req );
+    //engine_speed = DigitalDash_Add_PID_To_Stream( &engine_speed_req );
 #endif
 
     /* Set the initialized flag */
@@ -701,10 +710,13 @@ DIGITALDASH_STATUS digitaldash_service( void )
 #endif
         }
 
+        /*
         if( (engine_speed->pid_value >= 500) )
             digitaldash_shutdown = ENGINE_OFF_SHUTDOWN_TIME;
+            */
 
 #if BKLT_CTRL_ACTIVE
+#if USE_KE_PROTOCOL
         /* Turn off the LCD if no messages are received by LCD_BKLT_TIMEOUT */
         if( digitaldash_bklt_wtchdg <= 0 )
         {
@@ -713,7 +725,8 @@ DIGITALDASH_STATUS digitaldash_service( void )
 
             Update_LCD_Brightness(0);
         } else {
-#if defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)
+#endif
+#if (defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)) & !LCD_ALWAYS_ON
             /* TODO - Adjustments may be needed with real world testing */
             /* Map the gauge brightness to the LCD driver */
             uint32_t brightness_adjusted = map( gauge_brightness->pid_value,
@@ -733,12 +746,11 @@ DIGITALDASH_STATUS digitaldash_service( void )
                 brightness_adjusted = LCD_MAX_BRIGHTNESS;
 
             Update_LCD_Brightness( brightness_adjusted );
-#else
-            Update_LCD_Brightness( LCD_MAX_BRIGHTNESS );
-#endif
         }
+#else
+        Update_LCD_Brightness( LCD_MAX_BRIGHTNESS );
 #endif
-
+#endif
         return DIGITALDASH_OK;
     }
 
@@ -830,7 +842,7 @@ void digitaldash_tick( void )
         digitaldash_shutdown--;
 #endif
 
-    #ifdef USE_LIB_OBDII
+#ifdef USE_LIB_OBDII
     if( tester_present > 0 ) {
         tester_present--;
     }
@@ -840,24 +852,24 @@ void digitaldash_tick( void )
         /* The timer expired, therefore it is assumed no tester is present */
         update_app_flag( DD_TESTER_PRESENT, NO_TESTER_PRESENT );
 
-        #ifdef LIB_OBDII_H_
         /* Allow OBDII communication now that it is the only device present */
         OBDII_Continue( &obdii );
-        #endif
     }
-    #endif
+#endif
 
+#if USE_KE_PROTOCOL
     KE_tick();
+#endif
 
-    #ifdef USE_LIB_OBDII
+#if USE_LIB_OBDII
     OBDII_tick();
-    #endif
+#endif
 
-    #ifdef USE_LIB_CAN_BUS_SNIFFER
+#ifdef USE_LIB_CAN_BUS_SNIFFER
     CAN_Sniffer_tick();
-    #endif
+#endif
 
-    #ifdef USE_LIB_VEHICLE_DATA
+#ifdef USE_LIB_VEHICLE_DATA
     Vehicle_tick();
-    #endif
+#endif
 }
