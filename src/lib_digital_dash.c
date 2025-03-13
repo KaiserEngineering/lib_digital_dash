@@ -842,7 +842,7 @@ void digitaldash_tick( void )
         digitaldash_shutdown--;
 #endif
 
-#ifdef USE_LIB_OBDII
+#if USE_LIB_OBDII
     if( tester_present > 0 ) {
         tester_present--;
     }
