@@ -97,7 +97,7 @@ static volatile uint32_t digitaldash_app_wtchdg = 0xFFFFFFFF;
 static volatile uint32_t digitaldash_bklt_wtchdg = 0xFFFFFFFF;
 
 /* Timer to shutdown the Digital Dash */
-#ifdef ENABLE_WHEN_ENGINE_ON
+#if ENABLE_WHEN_ENGINE_ON
 static volatile uint32_t digitaldash_shutdown = 60000;
 #else
 static volatile uint32_t digitaldash_shutdown = 900000;
@@ -331,7 +331,7 @@ void DigitalDash_Reset_App( void )
     DigitalDash_Config_NULL_Check();
 }
 
-#ifdef BKLT_CTRL_ACTIVE
+#if BKLT_CTRL_ACTIVE
 /* Set the LCD brightness if needed */
 static void Update_LCD_Brightness( uint8_t value )
 {
@@ -401,14 +401,14 @@ void DigitalDash_Add_UART_byte( uint8_t byte )
     /* Reset the watchdog. The timeout value is the max time between frames */
     digitaldash_app_wtchdg = OS_FRAME_TIMEOUT;
 
-    #ifdef BKLT_CTRL_ACTIVE
+    #if BKLT_CTRL_ACTIVE
         Refresh_LCD();
     #endif
 
     if( num_pids > 0x00 )
     	ke_uart_count++;
 
-	#ifdef LIB_KE_PROTOCOL_H_
+	#if USE_KE_PROTOCOL
     /* Add the UART byte to the KE packet manager */
     KE_Add_UART_Byte( &host, byte );
 	#endif
@@ -417,15 +417,15 @@ void DigitalDash_Add_UART_byte( uint8_t byte )
 /* Copy the CAN packets to the relevant libraries */
 void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data )
 {
-	#ifdef LIB_OBDII_H_
+	#if USE_LIB_OBDII
     OBDII_Add_Packet( &obdii, id, data );
 	#endif
 
-	#ifdef LIB_CAN_BUS_SNIFFER_H_
+	#if USE_LIB_CAN_BUS_SNIFFER
     CAN_Sniffer_Add_Packet( &sniffer, id, data );
 	#endif
 
-    #ifdef LIB_OBDII_H_
+    #if USE_LIB_OBDII
     /* TODO: 7E0 is the common tester ID, but others could be used */
     if( id == 0x7E0 )
     {
@@ -433,7 +433,7 @@ void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data )
 
         update_app_flag( DD_TESTER_PRESENT, TESTER_PRESENT );
 
-        #ifdef LIB_OBDII_H_
+        #if USE_LIB_OBDII
         OBDII_Pause( &obdii );
         #endif
     }
@@ -865,11 +865,11 @@ void digitaldash_tick( void )
     OBDII_tick();
 #endif
 
-#ifdef USE_LIB_CAN_BUS_SNIFFER
+#if USE_LIB_CAN_BUS_SNIFFER
     CAN_Sniffer_tick();
 #endif
 
-#ifdef USE_LIB_VEHICLE_DATA
+#if USE_LIB_VEHICLE_DATA
     Vehicle_tick();
 #endif
 }
