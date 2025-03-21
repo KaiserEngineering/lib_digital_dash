@@ -285,7 +285,7 @@ PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 	num_pids++;
 
 	/* Get the base units */
-	ptr->base_unit = get_pid_base_unit( ptr->mode , ptr->pid );
+	ptr->base_unit = get_pid_base_unit( ptr->pid_uuid );
 
 	#if USE_LIB_CAN_BUS_SNIFFER
 	/* Add the PID to the sniffer if supported */
