@@ -156,8 +156,8 @@ static void DigitalDash_Reset_PID( PTR_PID_DATA pid )
     pid->acquisition_type = PID_UNASSIGNED;
     pid->pid_value        = 0;
     pid->timestamp        = 0;
-    pid->pid_min          = 0;
-    pid->pid_max          = 0;
+    pid->pid_min          = INIT_MIN;
+    pid->pid_max          = INIT_MAX;
 }
 
 /* Clear ALL of the PIDs, this should only be called when the *
