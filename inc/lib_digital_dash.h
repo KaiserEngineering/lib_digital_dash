@@ -171,7 +171,7 @@ typedef void (*DD_USB_CTRL)( USB_PWR_STATE state );
 #endif
 
 #if HW_CAN_FILTERS
-typedef void (*DD_CAN_FILTER)( uint16_t id );
+typedef void (*DD_CAN_FILTER)( uint16_t id, uint8_t enable );
 #endif
 
 typedef enum _digitaldash_init_status {
