@@ -109,8 +109,10 @@ static volatile uint32_t tester_present = 0;
 /* Number of packets before enabling the LCD backlight */
 #define KE_UART_THRESHOLD 40
 
+#if USE_KE_PROTOCOL
 /* Number of packets rx'd from the host */
 static uint32_t ke_uart_count = 0;
+#endif
 
 #if SPOOF_DATA
 #define SPOOF_INTERVAL_T      25 // ms
@@ -327,7 +329,9 @@ void DigitalDash_Reset_App( void )
     digitaldash_delay       = 0x00000000;
     digitaldash_bklt_wtchdg = 0x00000000;
     digitaldash_app_wtchdg  = 0xFFFFFFFF;
+#if USE_KE_PROTOCOL
     ke_uart_count           = 0x00000000;
+#endif
     DigitalDash_Reset_PID_Stream();
     DigitalDash_Config_NULL_Check();
 }
@@ -406,8 +410,10 @@ void DigitalDash_Add_UART_byte( uint8_t byte )
         Refresh_LCD();
     #endif
 
+#if USE_KE_PROTOCOL
     if( num_pids > 0x00 )
     	ke_uart_count++;
+#endif
 
 	#if USE_KE_PROTOCOL
     /* Add the UART byte to the KE packet manager */
@@ -591,11 +597,11 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
 
 #if defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)
     /* Start obtaining the gauge brightness */
-    //gauge_brightness = DigitalDash_Add_PID_To_Stream( &gauge_brightness_req );
+    gauge_brightness = DigitalDash_Add_PID_To_Stream( &gauge_brightness_req );
 #endif
 
 #if defined(MODE1_ENGINE_SPEED_SUPPORTED) || !defined(LIMIT_PIDS)
-    //engine_speed = DigitalDash_Add_PID_To_Stream( &engine_speed_req );
+    engine_speed = DigitalDash_Add_PID_To_Stream( &engine_speed_req );
 #endif
 
     /* Set the initialized flag */
@@ -721,13 +727,15 @@ DIGITALDASH_STATUS digitaldash_service( void )
         /* Turn off the LCD if no messages are received by LCD_BKLT_TIMEOUT */
         if( digitaldash_bklt_wtchdg <= 0 )
         {
+
         	/* Reset the UART count */
         	ke_uart_count = 0;
+
 
             Update_LCD_Brightness(0);
         } else {
 #endif
-#if (defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)) & !LCD_ALWAYS_ON
+#if (defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS))
             /* TODO - Adjustments may be needed with real world testing */
             /* Map the gauge brightness to the LCD driver */
             uint32_t brightness_adjusted = map( gauge_brightness->pid_value,
@@ -747,7 +755,9 @@ DIGITALDASH_STATUS digitaldash_service( void )
                 brightness_adjusted = LCD_MAX_BRIGHTNESS;
 
             Update_LCD_Brightness( brightness_adjusted );
+#if USE_KE_PROTOCOL
         }
+#endif
 #else
         Update_LCD_Brightness( LCD_MAX_BRIGHTNESS );
 #endif
