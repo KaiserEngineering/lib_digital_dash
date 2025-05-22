@@ -72,12 +72,12 @@ static VEHICLE_DATA_MANAGER vehicle;
 
 /* Configure the Digital Dash to sync the backlight with the vehicle's lighting */
 #if defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)
-static PID_DATA gauge_brightness_req = { .pid = SNIFF_GAUGE_BRIGHTNESS_PID, .mode = SNIFF, .pid_unit = PID_UNITS_PERCENT, .pid_value = 100 };
+static PID_DATA gauge_brightness_req = { .pid_uuid = SNIFF_GAUGE_BRIGHTNESS_UUID, .mode = SNIFF, .pid_unit = PID_UNITS_PERCENT, .pid_value = 100 };
 static PTR_PID_DATA gauge_brightness;
 #endif
 
 #if defined(MODE1_ENGINE_SPEED_SUPPORTED) || !defined(LIMIT_PIDS)
-static PID_DATA engine_speed_req = { .pid = MODE1_ENGINE_SPEED_PID, .mode = MODE1, .pid_unit = PID_UNITS_RPM, .pid_value = 0 };
+static PID_DATA engine_speed_req = { .pid_uuid = MODE1_ENGINE_SPEED_UUID, .mode = MODE1, .pid_unit = PID_UNITS_RPM, .pid_value = 0 };
 static PTR_PID_DATA engine_speed;
 #endif
 
