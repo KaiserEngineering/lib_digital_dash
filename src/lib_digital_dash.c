@@ -72,12 +72,12 @@ static VEHICLE_DATA_MANAGER vehicle;
 
 /* Configure the Digital Dash to sync the backlight with the vehicle's lighting */
 #if defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)
-static PID_DATA gauge_brightness_req = { .pid_uuid = SNIFF_GAUGE_BRIGHTNESS_UUID, .mode = SNIFF, .pid_unit = PID_UNITS_PERCENT, .pid_value = 100 };
+static PID_DATA gauge_brightness_req = { .pid_uuid = SNIFF_GAUGE_BRIGHTNESS_UUID, .pid_unit = PID_UNITS_NONE, .pid_value = 100 };
 static PTR_PID_DATA gauge_brightness;
 #endif
 
 #if defined(MODE1_ENGINE_SPEED_SUPPORTED) || !defined(LIMIT_PIDS)
-static PID_DATA engine_speed_req = { .pid_uuid = MODE1_ENGINE_SPEED_UUID, .mode = MODE1, .pid_unit = PID_UNITS_RPM, .pid_value = 0 };
+static PID_DATA engine_speed_req = { .pid_uuid = MODE1_ENGINE_SPEED_UUID, .pid_unit = PID_UNITS_RPM, .pid_value = 0 };
 static PTR_PID_DATA engine_speed;
 #endif
 
@@ -249,7 +249,7 @@ PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 
 	for( slot = 0; slot < DD_MAX_PIDS; slot++)
 	{
-	    if( stream[slot].pid == PID_UNASSIGNED )
+	    if( stream[slot].pid_uuid == PID_UNASSIGNED )
 	        break;
 	}
 
@@ -263,8 +263,7 @@ PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 	for( uint8_t i = 0; i < num_pids; i++ )
 	{
 		/* If so, return the pointer */
-		if( stream[i].pid == pid->pid  &&
-				stream[i].mode == pid->mode )
+		if( stream[i].pid_uuid == pid->pid_uuid )
 		{
 			/* Increment the number of devices */
 			stream[i].devices++;
@@ -287,8 +286,8 @@ PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 	/* Increment the number of PIDs */
 	num_pids++;
 
-	/* Get the base units */
-	ptr->base_unit = get_pid_base_unit( ptr->pid_uuid );
+	/* Update the PID with all relevant data */
+	load_pid_data( ptr );
 
 	#if USE_LIB_CAN_BUS_SNIFFER
 	/* Add the PID to the sniffer if supported */
