@@ -174,6 +174,10 @@ typedef void (*DD_USB_CTRL)( USB_PWR_STATE state );
 typedef void (*DD_CAN_FILTER)( uint16_t id, uint8_t enable );
 #endif
 
+#if BACKGROUND_IMG_SAVE
+typedef void (*DD_BACKGROUND_IMG_SAVE)( uint8_t *image_buffer, uint32_t image_size, uint8_t idx );
+#endif
+
 typedef enum _digitaldash_init_status {
     DIGITALDASH_INIT_ERROR,
     DIGITALDASH_INIT_SD_PTR_ERROR,
@@ -185,6 +189,7 @@ typedef enum _digitaldash_init_status {
     DIGITALDASH_INIT_USB_PTR_ERROR,
     DIGITALDASH_INIT_CAN_FILT_PTR_ERROR,
     DIGITALDASH_INIT_KE_INIT_ERROR,
+	DIGITALDASH_INIT_BACKGROUND_SAVE_PTR_ERROR,
     DIGITALDASH_INIT_OK
 } DIGITALDASH_INIT_STATUS, *PDIGITALDASH_INIT_STATUS;
 
@@ -260,6 +265,13 @@ typedef struct _digitaldash_config {
     /* The digital dash will call this function when a new CAN   *
      * bus filter is needed                                      */
     DD_CAN_FILTER dd_filter;
+#endif
+
+#if BACKGROUND_IMG_SAVE
+    /* The digital dash will call this function when a           *
+     * background image has been transfered as RGBA data and     *
+     * needs to be saved                                         */
+    DD_BACKGROUND_IMG_SAVE dd_background_save;
 #endif
 
 } DIGITALDASH_CONFIG, *PDIGITALDASH_CONFIG;
