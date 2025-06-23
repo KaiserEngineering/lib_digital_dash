@@ -709,16 +709,15 @@ DIGITALDASH_STATUS digitaldash_service( void )
             DigitalDash_PowerCylce();
 
 		#if DIGITALDASH_GRAPHICS
-		else if( digitaldash_get_flag( DD_GUI_ACTIVE ) == GUI_IS_INACTIVE ) {
-
-			update_app_flag( DD_GUI_ACTIVE, GUI_IS_ACTIVE );
-		}
-
 		else if( digitaldash_get_flag( DD_SETTINGS_LOADED ) == SETTINGS_NOT_LOADED ) {
 	        // Load all settings from EEPROM
 	        load_settings();
-	        build_ui();
 			update_app_flag( DD_SETTINGS_LOADED, SETTINGS_LOADED );
+		}
+
+		else if( digitaldash_get_flag( DD_GUI_ACTIVE ) == GUI_IS_INACTIVE ) {
+			build_ui();
+			update_app_flag( DD_GUI_ACTIVE, GUI_IS_ACTIVE );
 		}
 
 		#endif
@@ -781,7 +780,8 @@ DIGITALDASH_STATUS digitaldash_service( void )
             else if( brightness_adjusted >= LCD_MAX_BRIGHTNESS )
                 brightness_adjusted = LCD_MAX_BRIGHTNESS;
 
-            Update_LCD_Brightness( brightness_adjusted );
+            if( digitaldash_get_flag( DD_GUI_ACTIVE ) )
+            	Update_LCD_Brightness( brightness_adjusted );
 		#if USE_KE_PROTOCOL & DIGITALDASH_DATA_ACQ_ONLY
         }
 		#endif
