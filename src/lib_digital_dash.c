@@ -358,7 +358,8 @@ static void Update_LCD_Brightness( uint8_t value )
         Set_Brightness = value;
 
         /* Call the HAL function to update the brightness */
-        set_backlight( Brightness );
+        if( set_backlight != NULL )
+        	set_backlight( Brightness );
     }
 }
 
