@@ -1,9 +1,16 @@
 #ifndef LIB_DIGITAL_DASH_H
 #define LIB_DIGITAL_DASH_H
 
+#define DIGITALDASH_GRAPHICS_ONLY (DIGITALDASH_GRAPHICS & !DIGITALDASH_DATA_ACQ)
+#define DIGITALDASH_DATA_ACQ_ONLY (DIGITALDASH_DATA_ACQ & !DIGITALDASH_GRAPHICS)
+
 #include "../ke_conf.h"
 #include "stddef.h"
-
+#if DIGITALDASH_GRAPHICS
+#include "lvgl.h"
+#include "ui.h"
+#include "ke_config.h"
+#endif
 
 #if USE_KE_PROTOCOL
 #include "lib_ke_protocol.h"
@@ -114,9 +121,12 @@ typedef enum _digitaldash_flags{
         #define LCD_DISABLED              0
         #define LCD_ENABLED               1
     DD_USB_PWR,
-    DD_TESTER_PRESENT
+    DD_TESTER_PRESENT,
         #define TESTER_PRESENT            0
         #define NO_TESTER_PRESENT         1
+	DD_SETTINGS_LOADED
+		#define SETTINGS_NOT_LOADED       0
+		#define SETTINGS_LOADED           1
 
 } DIGITALDASH_FLAG, *PDIGITALDASH_FLAG;
 

@@ -342,7 +342,7 @@ void DigitalDash_Reset_App( void )
 /* Set the LCD brightness if needed */
 static void Update_LCD_Brightness( uint8_t value )
 {
-	#if USE_KE_PROTOCOL & (DIGITALDASH_TYPE == DIGITALDASH_DATA_ACQ_ONLY)
+	#if USE_KE_PROTOCOL & DIGITALDASH_DATA_ACQ_ONLY
 	/* Verify enough packets have been rx'd */
 	if( ke_uart_count < KE_UART_THRESHOLD )
 		value = 0;
@@ -708,6 +708,21 @@ DIGITALDASH_STATUS digitaldash_service( void )
         else if( digitaldash_app_wtchdg <= 0 )
             DigitalDash_PowerCylce();
 
+		#if DIGITALDASH_GRAPHICS
+		else if( digitaldash_get_flag( DD_GUI_ACTIVE ) == GUI_IS_INACTIVE ) {
+
+			update_app_flag( DD_GUI_ACTIVE, GUI_IS_ACTIVE );
+		}
+
+		else if( digitaldash_get_flag( DD_SETTINGS_LOADED ) == SETTINGS_NOT_LOADED ) {
+	        // Load all settings from EEPROM
+	        load_settings();
+	        build_ui();
+			update_app_flag( DD_SETTINGS_LOADED, SETTINGS_LOADED );
+		}
+
+		#endif
+
         else {
 			#if USE_KE_PROTOCOL
             /* Service the KE protocol manager */
@@ -723,6 +738,10 @@ DIGITALDASH_STATUS digitaldash_service( void )
             /* Service the Vehicle Data manager */
             Vehicle_service( &vehicle );
 			#endif
+
+			#if DIGITALDASH_GRAPHICS
+            ui_service();
+			#endif
         }
 
         /*
@@ -731,7 +750,7 @@ DIGITALDASH_STATUS digitaldash_service( void )
             */
 
 		#if BKLT_CTRL_ACTIVE
-		#if USE_KE_PROTOCOL & (DIGITALDASH_TYPE == DIGITALDASH_DATA_ACQ_ONLY)
+		#if USE_KE_PROTOCOL & DIGITALDASH_DATA_ACQ_ONLY
         /* Turn off the LCD if no messages are received by LCD_BKLT_TIMEOUT */
         if( digitaldash_bklt_wtchdg <= 0 )
         {
@@ -763,7 +782,7 @@ DIGITALDASH_STATUS digitaldash_service( void )
                 brightness_adjusted = LCD_MAX_BRIGHTNESS;
 
             Update_LCD_Brightness( brightness_adjusted );
-		#if USE_KE_PROTOCOL & (DIGITALDASH_TYPE == DIGITALDASH_DATA_ACQ_ONLY)
+		#if USE_KE_PROTOCOL & DIGITALDASH_DATA_ACQ_ONLY
         }
 		#endif
 		#else
@@ -848,20 +867,20 @@ void digitaldash_tick( void )
     if( digitaldash_delay > 0 )
         digitaldash_delay--;
 
-#ifndef SPOOF_DATA
+	#ifndef SPOOF_DATA
     if( digitaldash_app_wtchdg > 0 )
         digitaldash_app_wtchdg--;
-#endif
+	#endif
 
     if( digitaldash_bklt_wtchdg > 0 )
         digitaldash_bklt_wtchdg--;
 
-#ifndef SPOOF_DATA
+	#ifndef SPOOF_DATA
     if( digitaldash_shutdown > 0 )
         digitaldash_shutdown--;
-#endif
+	#endif
 
-#if USE_LIB_OBDII
+	#if USE_LIB_OBDII
     if( tester_present > 0 ) {
         tester_present--;
     }
@@ -874,7 +893,7 @@ void digitaldash_tick( void )
         /* Allow OBDII communication now that it is the only device present */
         OBDII_Continue( &obdii );
     }
-#endif
+	#endif
 
 	#if USE_KE_PROTOCOL
     KE_tick();
@@ -890,5 +909,9 @@ void digitaldash_tick( void )
 
 	#if USE_LIB_VEHICLE_DATA
     Vehicle_tick();
+	#endif
+
+	#if DIGITALDASH_GRAPHICS
+    ui_tick();
 	#endif
 }
