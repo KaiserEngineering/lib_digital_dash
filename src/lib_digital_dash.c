@@ -567,7 +567,12 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
 
 #if USE_KE_PROTOCOL
     /* lib_ke_protocol initialization */
-    coprocessor.init.transmit  = ke_tx;                                 /* Function call to transmit UART data to the host */
+	#if DIGITALDASH_GRAPHICS_ONLY
+    coprocessor.init.role      = KE_PRIMARY;
+	#else
+	coprocessor.init.role      = KE_SECONDARY;
+	#endif
+    coprocessor.init.transmit  = ke_tx;                                 /* Function call to transmit UART data to the coprocessor */
     coprocessor.init.req_pid   = &DigitalDash_Add_PID_To_Stream;        /* Function call to request a PID */
     coprocessor.init.clear_pid = &DigitalDash_Remove_PID_From_Stream;   /* Function call to remove a PID */
     coprocessor.init.cooling   = &active_cooling;                       /* Function call to request active cooling */
