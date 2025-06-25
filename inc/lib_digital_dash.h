@@ -147,7 +147,7 @@ typedef void (*DD_GET_SD_CARD_STATE)( void );
 #if KE_ACTIVE
 /* The digital dash will call this function to send a send  *
 * a transmission to the KE host device                     */
-typedef uint8_t (*DD_KE_TX)( uint8_t tx[], uint8_t len );
+typedef int (*DD_KE_TX)( uint8_t tx[], uint8_t len );
 #endif
 
 #if ECU_ACTIVE
