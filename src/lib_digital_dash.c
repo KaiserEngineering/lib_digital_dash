@@ -578,6 +578,7 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     coprocessor.init.cooling   = &active_cooling;                       /* Function call to request active cooling */
     coprocessor.init.config_to_json = &config_to_json;                  /* Function call to construct JSON of the config */
     coprocessor.init.json_to_config = &json_to_config;                  /* Function call to apply JSON data to the config */
+    coprocessor.init.options_to_json = &options_to_json;                /* Function call to construct JSON of the option list */
     coprocessor.init.firmware_version_major  = FIRMWARE_VERSION_MAJOR;  /* Major firmware version */
     coprocessor.init.firmware_version_minor  = FIRMWARE_VERSION_MINOR;  /* Minor firmware version */
     coprocessor.init.firmware_version_hotfix = FIRMWARE_VERSION_HOTFIX; /* Hot fix firmware version */
