@@ -581,6 +581,7 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     coprocessor.init.config_to_json = &config_to_json;                  /* Function call to construct JSON of the config */
     coprocessor.init.json_to_config = &json_to_config;                  /* Function call to apply JSON data to the config */
     coprocessor.init.options_to_json = &options_to_json;                /* Function call to construct JSON of the option list */
+    coprocessor.init.pid_list_to_json = &pid_list_to_json;
     coprocessor.init.get_rgba_crc = &calc_crc32;
     coprocessor.init.save_rgba = background_save;                       /* Function call save png bytes to storage */
     coprocessor.init.firmware_version_major  = FIRMWARE_VERSION_MAJOR;  /* Major firmware version */
