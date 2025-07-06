@@ -53,6 +53,8 @@ static volatile DIGITALDASH_OPERATING_STATE state = DD_OP_OFF;
 #if USE_KE_PROTOCOL
 /* Declare a KE packet manager */
 static KE_PACKET_MANAGER coprocessor;
+static uint8_t uart_tx_buffer[KE_MAX_TX_PAYLOAD] = {0};
+static uint8_t uart_rx_buffer[KE_MAX_RX_PAYLOAD] = {0};
 #endif
 
 #if USE_LIB_OBDII
@@ -579,9 +581,14 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     coprocessor.init.config_to_json = &config_to_json;                  /* Function call to construct JSON of the config */
     coprocessor.init.json_to_config = &json_to_config;                  /* Function call to apply JSON data to the config */
     coprocessor.init.options_to_json = &options_to_json;                /* Function call to construct JSON of the option list */
+    coprocessor.init.save_rgba = background_save;                       /* Function call save png bytes to storage */
     coprocessor.init.firmware_version_major  = FIRMWARE_VERSION_MAJOR;  /* Major firmware version */
     coprocessor.init.firmware_version_minor  = FIRMWARE_VERSION_MINOR;  /* Minor firmware version */
     coprocessor.init.firmware_version_hotfix = FIRMWARE_VERSION_HOTFIX; /* Hot fix firmware version */
+    coprocessor.tx_buffer_size = KE_MAX_TX_PAYLOAD;
+    coprocessor.rx_buffer_size = KE_MAX_RX_PAYLOAD;
+    coprocessor.tx_buffer = uart_tx_buffer;
+    coprocessor.rx_buffer = uart_rx_buffer;
 
     /* Initialize the KE library */
     if( KE_Initialize( &coprocessor ) != KE_OK )

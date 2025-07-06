@@ -185,7 +185,7 @@ typedef void (*DD_CAN_FILTER)( uint16_t id, uint8_t enable );
 #endif
 
 #if BACKGROUND_IMG_SAVE
-typedef void (*DD_BACKGROUND_IMG_SAVE)( uint8_t *image_buffer, uint32_t image_size, uint8_t idx );
+typedef bool (*DD_BACKGROUND_IMG_SAVE)( char *image_buffer, uint32_t image_size, uint8_t idx );
 #endif
 
 typedef enum _digitaldash_init_status {
