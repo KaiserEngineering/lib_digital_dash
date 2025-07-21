@@ -149,6 +149,9 @@ DD_CAN_FILTER filter                      = NULL;
 #if BACKGROUND_IMG_SAVE
 DD_BACKGROUND_IMG_SAVE background_save    = NULL;
 #endif
+#if SPLASH_OVERRIDE
+DD_SPLASH_OVERRIDE splash_override    = NULL;
+#endif
 
 DIGITALDASH_INIT_STATUS DigitalDash_Config_NULL_Check( void );
 static void host_power( HOST_PWR_STATE host_state );
@@ -567,6 +570,12 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     background_save = config->dd_background_save;
 #endif
 
+#if SPLASH_OVERRIDE
+    if( config->dd_splash_override == NULL )
+        return DIGITALDASH_INIT_SPLASH_OVERRIDE_PTR_ERROR;
+    splash_override = config->dd_splash_override;
+#endif
+
 #if USE_KE_PROTOCOL
     /* lib_ke_protocol initialization */
 	#if DIGITALDASH_GRAPHICS_ONLY
@@ -735,6 +744,8 @@ DIGITALDASH_STATUS digitaldash_service( void )
 
 		else if( digitaldash_get_flag( DD_GUI_ACTIVE ) == GUI_IS_INACTIVE ) {
 			build_ui();
+			if( splash_override() )
+				skip_splash();
 			update_app_flag( DD_GUI_ACTIVE, GUI_IS_ACTIVE );
 		}
 

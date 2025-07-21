@@ -188,6 +188,10 @@ typedef void (*DD_CAN_FILTER)( uint16_t id, uint8_t enable );
 typedef bool (*DD_BACKGROUND_IMG_SAVE)( char *image_buffer, uint32_t image_size, uint8_t idx );
 #endif
 
+#if SPLASH_OVERRIDE
+typedef bool (*DD_SPLASH_OVERRIDE)( void );
+#endif
+
 typedef enum _digitaldash_init_status {
     DIGITALDASH_INIT_ERROR,
     DIGITALDASH_INIT_SD_PTR_ERROR,
@@ -200,6 +204,7 @@ typedef enum _digitaldash_init_status {
     DIGITALDASH_INIT_CAN_FILT_PTR_ERROR,
     DIGITALDASH_INIT_KE_INIT_ERROR,
 	DIGITALDASH_INIT_BACKGROUND_SAVE_PTR_ERROR,
+	DIGITALDASH_INIT_SPLASH_OVERRIDE_PTR_ERROR,
     DIGITALDASH_INIT_OK
 } DIGITALDASH_INIT_STATUS, *PDIGITALDASH_INIT_STATUS;
 
@@ -282,6 +287,10 @@ typedef struct _digitaldash_config {
      * background image has been transfered as RGBA data and     *
      * needs to be saved                                         */
     DD_BACKGROUND_IMG_SAVE dd_background_save;
+#endif
+
+#if SPLASH_OVERRIDE
+	DD_SPLASH_OVERRIDE dd_splash_override;
 #endif
 
 } DIGITALDASH_CONFIG, *PDIGITALDASH_CONFIG;
