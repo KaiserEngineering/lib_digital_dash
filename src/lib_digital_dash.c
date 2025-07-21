@@ -74,7 +74,7 @@ static VEHICLE_DATA_MANAGER vehicle;
 
 /* Configure the Digital Dash to sync the backlight with the vehicle's lighting */
 #if defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)
-static PID_DATA gauge_brightness_req = { .pid_uuid = SNIFF_GAUGE_BRIGHTNESS_UUID, .pid_unit = PID_UNITS_NONE, .pid_value = 100 };
+static PID_DATA gauge_brightness_req = { .pid_uuid = SNIFF_GAUGE_ILLUM_LEVEL_UUID, .pid_unit = PID_UNITS_NONE, .pid_value = 100 };
 static PTR_PID_DATA gauge_brightness;
 #endif
 
