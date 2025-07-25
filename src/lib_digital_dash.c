@@ -832,9 +832,9 @@ DIGITALDASH_STATUS digitaldash_service( void )
 float engine_rpm = 900;
 float turbo = 0;
 float oil_temp = 0;
-float can_button = 0;
 float baro = 101.4;
 float pid_map = 0;
+#define TEMP_VARIATION_RANGE 10.0f
 #endif
 
 void digitaldash_tick( void )
@@ -845,46 +845,44 @@ void digitaldash_tick( void )
     {
         for( uint8_t i = 0; i < DD_MAX_PIDS; i++ )
         {
-            if( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_ENGINE_SPEED) )
+            if( stream[i].pid_uuid == MODE1_ENGINE_SPEED_UUID )
             {
                 stream[i].timestamp++;
                 engine_rpm += 10;
                 stream[i].pid_value = engine_rpm;
                 if( engine_rpm >= 8000 )
                     engine_rpm = 900;
-            } else if ( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_TURBOCHARGER_COMPRESSOR_INLET_PRESSURE) )
+            } else if ( stream[i].pid_uuid == MODE1_BOOST_UUID )
             {
                 stream[i].timestamp++;
                 turbo += 0.5;
                 stream[i].pid_value = turbo;
                 if( turbo >= 255 )
                     turbo = 0;
-            } else if ( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_ENGINE_OIL_TEMPERATURE) )
+            } else if ( stream[i].pid_uuid == MODE1_OIL_TEMP_UUID )
             {
                 stream[i].timestamp++;
-                oil_temp += 0.1;
-                stream[i].pid_value = oil_temp;
-                if( oil_temp >= 200 )
-                    oil_temp = 0;
-            } else if ( (stream[i].mode == SNIFF) & (stream[i].pid == SNIFF_CRUISE_CONTROL_CAN_BUTTON) )
-            {
-                stream[i].timestamp++;
-                can_button += 1;
-                if( can_button > 200 )
-                    stream[i].pid_value = 1;
-                else
-                    stream[i].pid_value = 0;
 
-                if( can_button > 400 )
-                    can_button = 0;
-            } else if ( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_INTAKE_MANIFOLD_ABSOLUTE_PRESSURE) )
+                // Generate a random float between -5 and +5
+                float variation = ((float)(rand() % (int)(TEMP_VARIATION_RANGE * 20 + 1)) / 10.0f) - TEMP_VARIATION_RANGE;
+
+                oil_temp += variation;
+                stream[i].pid_value = oil_temp;
+
+                float middle = (stream[i].upper_limit - stream[i].lower_limit)/2;
+
+                if( oil_temp >= stream[i].upper_limit )
+                    oil_temp = middle;
+                if( oil_temp <= stream[i].lower_limit )
+                    oil_temp = middle ;
+            } else if ( stream[i].pid_uuid == MODE1_MANIFOLD_ABS_PRESS_UUID )
             {
                 stream[i].timestamp++;
                 pid_map += 0.65;
                 stream[i].pid_value = pid_map;
                 if( pid_map >= 253 )
                     pid_map = 0;
-            } else if ( (stream[i].mode == MODE1) & (stream[i].pid == MODE1_ABSOLUTE_BAROMETRIC_PRESSURE) )
+            } else if ( stream[i].pid_uuid == MODE1_BAROMETRIC_PRESSURE_UUID )
             {
                 stream[i].timestamp++;
                 stream[i].pid_value = baro;
