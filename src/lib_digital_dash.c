@@ -73,15 +73,11 @@ static VEHICLE_DATA_MANAGER vehicle;
 #endif
 
 /* Configure the Digital Dash to sync the backlight with the vehicle's lighting */
-#if defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)
 static PID_DATA gauge_brightness_req = { .pid_uuid = SNIFF_GAUGE_ILLUM_LEVEL_UUID, .pid_unit = PID_UNITS_NONE, .pid_value = 100 };
 static PTR_PID_DATA gauge_brightness;
-#endif
 
-#if defined(MODE1_ENGINE_SPEED_SUPPORTED) || !defined(LIMIT_PIDS)
 static PID_DATA engine_speed_req = { .pid_uuid = MODE1_ENGINE_SPEED_UUID, .pid_unit = PID_UNITS_RPM, .pid_value = 0 };
 static PTR_PID_DATA engine_speed;
-#endif
 
 /* Current LCD backlight brightness */
 static uint8_t Brightness = 0;
@@ -630,14 +626,10 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     Vehicle_Init( &vehicle );
 #endif
 
-#if defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS)
     /* Start obtaining the gauge brightness */
     gauge_brightness = DigitalDash_Add_PID_To_Stream( &gauge_brightness_req );
-#endif
 
-#if defined(MODE1_ENGINE_SPEED_SUPPORTED) || !defined(LIMIT_PIDS)
     engine_speed = DigitalDash_Add_PID_To_Stream( &engine_speed_req );
-#endif
 
     /* Set the initialized flag */
     update_app_flag( DD_FLG_INIT, DD_INITIALIZED );
@@ -790,7 +782,6 @@ DIGITALDASH_STATUS digitaldash_service( void )
             Update_LCD_Brightness(0);
         } else {
 		#endif
-		#if (defined(SNIFF_GAUGE_BRIGHTNESS_SUPPORTED) || !defined(LIMIT_PIDS))
             /* TODO - Adjustments may be needed with real world testing */
             /* Map the gauge brightness to the LCD driver */
             uint32_t brightness_adjusted = map( gauge_brightness->pid_value,
@@ -816,7 +807,6 @@ DIGITALDASH_STATUS digitaldash_service( void )
 		#endif
 		#else
         Update_LCD_Brightness( LCD_MAX_BRIGHTNESS );
-		#endif
 		#endif
 		return DIGITALDASH_OK;
     }
