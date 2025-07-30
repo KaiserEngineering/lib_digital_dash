@@ -654,8 +654,12 @@ DIGITALDASH_STATUS digitaldash_service( void )
             #endif
         }
 
+		#ifdef ENABLE_WHEN_ENGINE_ON
         if( (engine_speed->pid_value >= 500) )
             digitaldash_shutdown = CAN_BUS_IDLE_TIME;
+		#else
+        digitaldash_shutdown = CAN_BUS_IDLE_TIME;
+		#endif
 
 		#ifdef BKLT_CTRL_ACTIVE
         /* Turn off the LCD if no messages are received by LCD_BKLT_TIMEOUT */
