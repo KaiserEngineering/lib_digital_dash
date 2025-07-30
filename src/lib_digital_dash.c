@@ -738,6 +738,9 @@ DIGITALDASH_STATUS digitaldash_service( void )
 			build_ui();
 			if( splash_override() )
 				skip_splash();
+			// service the UI to make sure everything is initialized
+			for( uint8_t i = 0; i < 5; i++)
+				ui_service();
 			update_app_flag( DD_GUI_ACTIVE, GUI_IS_ACTIVE );
 		}
 
@@ -762,6 +765,46 @@ DIGITALDASH_STATUS digitaldash_service( void )
 			#if DIGITALDASH_GRAPHICS
             ui_service();
 			#endif
+
+			#if BKLT_CTRL_ACTIVE
+			#if USE_KE_PROTOCOL & DIGITALDASH_DATA_ACQ_ONLY
+			/* Turn off the LCD if no messages are received by LCD_BKLT_TIMEOUT */
+			if( digitaldash_bklt_wtchdg <= 0 )
+			{
+
+				/* Reset the UART count */
+				ke_uart_count = 0;
+
+
+				Update_LCD_Brightness(0);
+			} else {
+			#endif
+				/* TODO - Adjustments may be needed with real world testing */
+				/* Map the gauge brightness to the LCD driver */
+				uint32_t brightness_adjusted = map( gauge_brightness->pid_value,
+						FORD_MIN_BRIGHTNESS, FORD_MAX_BRIGHTNESS,
+						LCD_MIN_BRIGHTNESS, LCD_MAX_BRIGHTNESS );
+
+				/* Default to max brightness if no data has been RX'd */
+				if( gauge_brightness->timestamp == 0 )
+					brightness_adjusted = LCD_MAX_BRIGHTNESS;
+
+				/* Make sure the brightness is within the supported range. */
+				else if( brightness_adjusted <= LCD_MIN_BRIGHTNESS )
+					brightness_adjusted = LCD_MIN_BRIGHTNESS;
+
+				/* Make sure the brightness is within the supported range. */
+				else if( brightness_adjusted >= LCD_MAX_BRIGHTNESS )
+					brightness_adjusted = LCD_MAX_BRIGHTNESS;
+
+				if( digitaldash_get_flag( DD_GUI_ACTIVE ) )
+					Update_LCD_Brightness( brightness_adjusted );
+			#if USE_KE_PROTOCOL & DIGITALDASH_DATA_ACQ_ONLY
+			}
+			#endif
+			#else
+			Update_LCD_Brightness( LCD_MAX_BRIGHTNESS );
+			#endif
         }
 
         /*
@@ -769,45 +812,6 @@ DIGITALDASH_STATUS digitaldash_service( void )
             digitaldash_shutdown = ENGINE_OFF_SHUTDOWN_TIME;
             */
 
-		#if BKLT_CTRL_ACTIVE
-		#if USE_KE_PROTOCOL & DIGITALDASH_DATA_ACQ_ONLY
-        /* Turn off the LCD if no messages are received by LCD_BKLT_TIMEOUT */
-        if( digitaldash_bklt_wtchdg <= 0 )
-        {
-
-        	/* Reset the UART count */
-        	ke_uart_count = 0;
-
-
-            Update_LCD_Brightness(0);
-        } else {
-		#endif
-            /* TODO - Adjustments may be needed with real world testing */
-            /* Map the gauge brightness to the LCD driver */
-            uint32_t brightness_adjusted = map( gauge_brightness->pid_value,
-                    FORD_MIN_BRIGHTNESS, FORD_MAX_BRIGHTNESS,
-                    LCD_MIN_BRIGHTNESS, LCD_MAX_BRIGHTNESS );
-
-            /* Default to max brightness if no data has been RX'd */
-            if( gauge_brightness->timestamp == 0 )
-                brightness_adjusted = LCD_MAX_BRIGHTNESS;
-
-            /* Make sure the brightness is within the supported range. */
-            else if( brightness_adjusted <= LCD_MIN_BRIGHTNESS )
-                brightness_adjusted = LCD_MIN_BRIGHTNESS;
-
-            /* Make sure the brightness is within the supported range. */
-            else if( brightness_adjusted >= LCD_MAX_BRIGHTNESS )
-                brightness_adjusted = LCD_MAX_BRIGHTNESS;
-
-            if( digitaldash_get_flag( DD_GUI_ACTIVE ) )
-            	Update_LCD_Brightness( brightness_adjusted );
-		#if USE_KE_PROTOCOL & DIGITALDASH_DATA_ACQ_ONLY
-        }
-		#endif
-		#else
-        Update_LCD_Brightness( LCD_MAX_BRIGHTNESS );
-		#endif
 		return DIGITALDASH_OK;
     }
 
