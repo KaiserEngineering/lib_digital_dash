@@ -741,6 +741,9 @@ DIGITALDASH_STATUS digitaldash_service( void )
 			// service the UI to make sure everything is initialized
 			for( uint8_t i = 0; i < 5; i++)
 				ui_service();
+
+			digitaldash_delay = 50;
+
 			update_app_flag( DD_GUI_ACTIVE, GUI_IS_ACTIVE );
 		}
 
