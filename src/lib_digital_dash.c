@@ -691,7 +691,10 @@ DIGITALDASH_STATUS digitaldash_service( void )
     {
         /* If a delay was requested by the Digital Dash application, block all other functions *
          * until the delay is complete. This will NOT block any other application code         */
-        if( digitaldash_delay > 0 ) { /* Do nothing */ }
+        if( digitaldash_delay > 0 ) {
+        	if( digitaldash_get_flag( DD_GUI_ACTIVE ) == GUI_IS_ACTIVE )
+				ui_service();
+        }
 
         /* Turn off the host */
         else if( (digitaldash_shutdown <= 0) &&
@@ -738,9 +741,6 @@ DIGITALDASH_STATUS digitaldash_service( void )
 			build_ui();
 			if( splash_override() )
 				skip_splash();
-			// service the UI to make sure everything is initialized
-			for( uint8_t i = 0; i < 5; i++)
-				ui_service();
 
 			digitaldash_delay = 50;
 
