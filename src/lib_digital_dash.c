@@ -690,7 +690,7 @@ static void DigitalDash_PowerCylce()
 static void default_config(void)
 {
 	// Set splash screen to 5s
-	save_general_splash(0, 5, true);
+	set_general_splash(0, 5, true);
 
 	// View 0
 	#if MAX_VIEWS >= 1
