@@ -36,6 +36,8 @@
 #define BITFLIP(word,nbit)  ((word) ^=  (1<<(nbit)))
 #define BITCHECK(word,nbit) ((word) &   (1<<(nbit)))
 
+#define EE_VERSION_UUID 68
+
 /* Number of PIDs being streamed */
 static volatile uint32_t num_pids = 0;
 
@@ -685,6 +687,140 @@ static void DigitalDash_PowerCylce()
     digitaldash_delay = POWER_CYCLE_TIME;
 }
 
+static void default_config(void)
+{
+	// View 0
+	#if MAX_VIEWS >= 1
+	set_view_enable(0, VIEW_STATE_ENABLED, true);
+	set_view_num_gauges(0, 3, true);
+	set_view_background(0, VIEW_BACKGROUND_USER1, true);
+	set_view_gauge_theme(0, 0, GAUGE_THEME_STOCK_RS, true);
+	set_view_gauge_theme(0, 1, GAUGE_THEME_STOCK_RS, true);
+	set_view_gauge_theme(0, 2, GAUGE_THEME_STOCK_RS, true);
+
+	set_view_gauge_pid(0, 0, MODE1_INTAKE_AIR_TEMP_UUID, true);
+	set_view_gauge_units(0, 0, PID_UNITS_RPM, true);
+
+	set_view_gauge_pid(0, 1, CALC1_BOOST_VACUUM_UUID, true);
+	set_view_gauge_units(0, 1, PID_UNITS_PSI, true);
+
+	set_view_gauge_pid(0, 2, MODE1_OIL_TEMP_UUID, true);
+	set_view_gauge_units(0, 2, PID_UNITS_FAHRENHEIT, true);
+	#endif
+
+	// View 1
+	#if MAX_VIEWS >= 2
+	set_view_enable(1, VIEW_STATE_ENABLED, true);
+	set_view_num_gauges(1, 1, true);
+	set_view_background(1, VIEW_BACKGROUND_USER1, true);
+	set_view_gauge_theme(1, 0, GAUGE_THEME_LINEAR, true);
+	set_view_gauge_theme(1, 1, GAUGE_THEME_LINEAR, true);
+	set_view_gauge_theme(1, 2, GAUGE_THEME_LINEAR, true);
+
+	set_view_gauge_pid(1, 0, CALC1_BOOST_VACUUM_UUID, true);
+	set_view_gauge_units(1, 0, PID_UNITS_RPM, true);
+
+	set_view_gauge_pid(1, 1, MODE1_INTAKE_AIR_TEMP_UUID, true);
+	set_view_gauge_units(1, 1, PID_UNITS_PSI, true);
+
+	set_view_gauge_pid(1, 2, MODE1_OIL_TEMP_UUID, true);
+	set_view_gauge_units(1, 2, PID_UNITS_FAHRENHEIT, true);
+	#endif
+
+	// View 2
+	#if MAX_VIEWS >= 3
+	set_view_enable(2, VIEW_STATE_DISABLED, true);
+	set_view_num_gauges(2, 3, true);
+	set_view_background(2, VIEW_BACKGROUND_USER1, true);
+	set_view_gauge_theme(2, 0, GAUGE_THEME_STOCK_RS, true);
+	set_view_gauge_theme(2, 1, GAUGE_THEME_STOCK_RS, true);
+	set_view_gauge_theme(2, 2, GAUGE_THEME_STOCK_RS, true);
+
+	set_view_gauge_pid(2, 0, MODE1_INTAKE_AIR_TEMP_UUID, true);
+	set_view_gauge_units(2, 0, PID_UNITS_RPM, true);
+
+	set_view_gauge_pid(2, 1, CALC1_BOOST_VACUUM_UUID, true);
+	set_view_gauge_units(2, 1, PID_UNITS_PSI, true);
+
+	set_view_gauge_pid(2, 2, MODE1_OIL_TEMP_UUID, true);
+	set_view_gauge_units(2, 2, PID_UNITS_FAHRENHEIT, true);
+	#endif
+
+	// Dynamic 0
+	#if MAX_DYNAMICS >= 1
+	set_dynamic_enable(0, DYNAMIC_STATE_ENABLED, true);
+	set_dynamic_pid(0, CALC1_CRUISE_CONTROL_OFF_BUTTON_TOGGLE_UUID, true);
+	set_dynamic_units(0, PID_UNITS_NONE, true);
+	set_dynamic_priority(0, DYNAMIC_PRIORITY_HIGH, true);
+	set_dynamic_compare(0, DYNAMIC_COMPARISON_GREATER_THAN, true);
+	set_dynamic_threshold(0, 0, true);
+	set_dynamic_view_index(0, 1, true);
+	#endif
+
+	// Dynamic 1
+	#if MAX_DYNAMICS >= 2
+	set_dynamic_enable(1, DYNAMIC_STATE_DISABLED, true);
+	set_dynamic_pid(1, CALC1_BOOST_VACUUM_UUID, true);
+	set_dynamic_units(1, PID_UNITS_PSI, true);
+	set_dynamic_priority(1, DYNAMIC_PRIORITY_MEDIUM, true);
+	set_dynamic_compare(1, DYNAMIC_COMPARISON_GREATER_THAN, true);
+	set_dynamic_threshold(1, 10, true);
+	set_dynamic_view_index(1, 1, true);
+	#endif
+
+	// Dynamic 2
+	#if MAX_DYNAMICS >= 3
+	set_dynamic_enable(2, DYNAMIC_STATE_ENABLED, true);
+	set_dynamic_pid(2, CALC1_BOOST_VACUUM_UUID, true);
+	set_dynamic_units(2, PID_UNITS_PSI, true);
+	set_dynamic_priority(2, DYNAMIC_PRIORITY_LOW, true);
+	set_dynamic_compare(2, DYNAMIC_COMPARISON_GREATER_THAN, true);
+	set_dynamic_threshold(2, 10, true);
+	set_dynamic_view_index(2, 0, true);
+	#endif
+
+	char msg[ALERT_MESSAGE_LEN] = "Alert";
+
+	// Alert 0
+	#if MAX_ALERTS >= 1
+	set_alert_enable(0, ALERT_STATE_DISABLED, true );
+	set_alert_pid(0, MODE1_ENGINE_SPEED_UUID, true );
+	set_alert_units(0, PID_UNITS_RPM, true );
+	set_alert_compare(0, ALERT_COMPARISON_GREATER_THAN_OR_EQUAL_TO, true );
+	set_alert_threshold(0, 6500, true );
+	snprintf(msg, ALERT_MESSAGE_LEN, "Exceeded Redline!");
+	set_alert_message(0, msg, true);
+	#endif
+
+	// Alert 1
+	#if MAX_ALERTS >= 2
+	set_alert_enable(1, ALERT_STATE_DISABLED, true );
+	set_alert_pid(1, MODE1_OIL_TEMP_UUID, true );
+	set_alert_units(1, PID_UNITS_FAHRENHEIT, true );
+	set_alert_compare(1, ALERT_COMPARISON_GREATER_THAN_OR_EQUAL_TO, true );
+	set_alert_threshold(1, 300, true );
+	snprintf(msg, ALERT_MESSAGE_LEN, "Oil Overtemp!");
+	set_alert_message(1, msg, true);
+	#endif
+
+	// Alert 2 - MAX_ALERTS
+	#if MAX_ALERTS >= 3
+	for( uint8_t i = 2; i < MAX_ALERTS; i++)
+	{
+		set_alert_enable(i, ALERT_STATE_DISABLED, true );
+		set_alert_pid(i, MODE1_OIL_TEMP_UUID, true );
+		set_alert_units(i, PID_UNITS_FAHRENHEIT, true );
+		set_alert_compare(i, ALERT_COMPARISON_GREATER_THAN_OR_EQUAL_TO, true );
+		set_alert_threshold(i, 300, true );
+		snprintf(msg, ALERT_MESSAGE_LEN, "Alert");
+		set_alert_message(i, msg, true);
+	}
+	#endif
+
+	// Update the EE version
+	set_general_ee_version(0, EE_VERSION_UUID, true);
+}
+
 DIGITALDASH_STATUS digitaldash_service( void )
 {
     if( digitaldash_get_flag( DD_FLG_INIT ) == DD_INITIALIZED )
@@ -734,6 +870,10 @@ DIGITALDASH_STATUS digitaldash_service( void )
 		else if( digitaldash_get_flag( DD_SETTINGS_LOADED ) == SETTINGS_NOT_LOADED ) {
 	        // Load all settings from EEPROM
 	        load_settings();
+
+	        if( get_general_ee_version(0) != EE_VERSION_UUID )
+	      	  default_config();
+
 			update_app_flag( DD_SETTINGS_LOADED, SETTINGS_LOADED );
 		}
 
