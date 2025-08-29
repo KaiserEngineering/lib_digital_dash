@@ -148,7 +148,10 @@ DD_CAN_FILTER filter                      = NULL;
 DD_BACKGROUND_IMG_SAVE background_save    = NULL;
 #endif
 #if SPLASH_OVERRIDE
-DD_SPLASH_OVERRIDE splash_override    = NULL;
+DD_SPLASH_OVERRIDE splash_override        = NULL;
+#endif
+#if  BOOTLOADER_ACTIVATION
+DD_BOOTLOADER_ACTIVATION bootloader_activate    = NULL;
 #endif
 
 DIGITALDASH_INIT_STATUS DigitalDash_Config_NULL_Check( void );
@@ -574,6 +577,12 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     splash_override = config->dd_splash_override;
 #endif
 
+#if BOOTLOADER_ACTIVATION
+    if( config->dd_bootloader_activate == NULL )
+        return DIGITALDASH_INIT_BOOTLOADER_ACTIVATION_PTR_ERROR;
+    bootloader_activate = config->dd_bootloader_activate;
+#endif
+
 #if USE_KE_PROTOCOL
     /* lib_ke_protocol initialization */
 	#if DIGITALDASH_GRAPHICS_ONLY
@@ -590,6 +599,7 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     coprocessor.init.options_to_json = &options_to_json;                /* Function call to construct JSON of the option list */
     coprocessor.init.pid_list_to_json = &pid_list_to_json;
     coprocessor.init.get_rgba_crc = &calc_crc32;
+    coprocessor.init.enter_bootloader = bootloader_activate;
     coprocessor.init.save_rgba = background_save;                       /* Function call save png bytes to storage */
     coprocessor.init.firmware_version_major  = FIRMWARE_VERSION_MAJOR;  /* Major firmware version */
     coprocessor.init.firmware_version_minor  = FIRMWARE_VERSION_MINOR;  /* Minor firmware version */

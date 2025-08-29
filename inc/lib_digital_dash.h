@@ -192,6 +192,10 @@ typedef bool (*DD_BACKGROUND_IMG_SAVE)( char *image_buffer, uint32_t image_size,
 typedef bool (*DD_SPLASH_OVERRIDE)( void );
 #endif
 
+#if BOOTLOADER_ACTIVATION
+typedef void (*DD_BOOTLOADER_ACTIVATION)( void );
+#endif
+
 typedef enum _digitaldash_init_status {
     DIGITALDASH_INIT_ERROR,
     DIGITALDASH_INIT_SD_PTR_ERROR,
@@ -205,6 +209,7 @@ typedef enum _digitaldash_init_status {
     DIGITALDASH_INIT_KE_INIT_ERROR,
 	DIGITALDASH_INIT_BACKGROUND_SAVE_PTR_ERROR,
 	DIGITALDASH_INIT_SPLASH_OVERRIDE_PTR_ERROR,
+	DIGITALDASH_INIT_BOOTLOADER_ACTIVATION_PTR_ERROR,
     DIGITALDASH_INIT_OK
 } DIGITALDASH_INIT_STATUS, *PDIGITALDASH_INIT_STATUS;
 
@@ -291,6 +296,10 @@ typedef struct _digitaldash_config {
 
 #if SPLASH_OVERRIDE
 	DD_SPLASH_OVERRIDE dd_splash_override;
+#endif
+
+#if BOOTLOADER_ACTIVATION
+	DD_BOOTLOADER_ACTIVATION dd_bootloader_activate;
 #endif
 
 } DIGITALDASH_CONFIG, *PDIGITALDASH_CONFIG;
