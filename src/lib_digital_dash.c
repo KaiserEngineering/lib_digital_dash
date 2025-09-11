@@ -688,7 +688,7 @@ static void host_power( HOST_PWR_STATE host_state )
     }
 }
 
-static void DigitalDash_PowerCylce()
+static void DigitalDash_PowerCycle()
 {
     /* Turn off the host */
     host_power( HOST_PWR_DISABLED );
@@ -842,7 +842,8 @@ DIGITALDASH_STATUS digitaldash_service( void )
          * until the delay is complete. This will NOT block any other application code         */
         if( digitaldash_delay > 0 ) {
         	if( digitaldash_get_flag( DD_GUI_ACTIVE ) == GUI_IS_ACTIVE )
-				ui_service();
+        		if( digitaldash_shutdown > 0 )
+        			ui_service();
         }
 
         /* Turn off the host */
@@ -853,6 +854,7 @@ DIGITALDASH_STATUS digitaldash_service( void )
             host_power( HOST_PWR_SLEEP );
 			#else
         	host_power( HOST_PWR_DISABLED );
+
 			#endif
         }
 
@@ -877,7 +879,7 @@ DIGITALDASH_STATUS digitaldash_service( void )
 
         /* If the application timer expires, reset the hardware                        */
         else if( digitaldash_app_wtchdg <= 0 )
-            DigitalDash_PowerCylce();
+            DigitalDash_PowerCycle();
 
 		#if DIGITALDASH_GRAPHICS
 		else if( digitaldash_get_flag( DD_SETTINGS_LOADED ) == SETTINGS_NOT_LOADED ) {
@@ -919,7 +921,8 @@ DIGITALDASH_STATUS digitaldash_service( void )
 			#endif
 
 			#if DIGITALDASH_GRAPHICS
-            ui_service();
+            if( digitaldash_shutdown > 0 )
+            	ui_service();
 			#endif
 
 			#if BKLT_CTRL_ACTIVE
@@ -941,8 +944,11 @@ DIGITALDASH_STATUS digitaldash_service( void )
 						FORD_MIN_BRIGHTNESS, FORD_MAX_BRIGHTNESS,
 						LCD_MIN_BRIGHTNESS, LCD_MAX_BRIGHTNESS );
 
+				if( digitaldash_shutdown <= 0 )
+					brightness_adjusted = 0;
+
 				/* Default to max brightness if no data has been RX'd */
-				if( gauge_brightness->timestamp == 0 )
+				else if( gauge_brightness->timestamp == 0 )
 					brightness_adjusted = LCD_MAX_BRIGHTNESS;
 
 				/* Make sure the brightness is within the supported range. */
@@ -963,10 +969,12 @@ DIGITALDASH_STATUS digitaldash_service( void )
 			#endif
         }
 
-        /*
+		#if ENABLE_WHEN_ENGINE_ON
         if( (engine_speed->pid_value >= 500) )
             digitaldash_shutdown = ENGINE_OFF_SHUTDOWN_TIME;
-            */
+		#else
+        	digitaldash_shutdown = ENGINE_OFF_SHUTDOWN_TIME;
+		#endif
 
 		return DIGITALDASH_OK;
     }
@@ -1044,7 +1052,7 @@ void digitaldash_tick( void )
     if( digitaldash_delay > 0 )
         digitaldash_delay--;
 
-	#ifndef SPOOF_DATA
+	#if DIGITALDASH_DATA_ACQ_ONLY
     if( digitaldash_app_wtchdg > 0 )
         digitaldash_app_wtchdg--;
 	#endif
@@ -1052,7 +1060,7 @@ void digitaldash_tick( void )
     if( digitaldash_bklt_wtchdg > 0 )
         digitaldash_bklt_wtchdg--;
 
-	#ifndef SPOOF_DATA
+	#if !SPOOF_DATA
     if( digitaldash_shutdown > 0 )
         digitaldash_shutdown--;
 	#endif
