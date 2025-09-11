@@ -653,6 +653,14 @@ static void host_power( HOST_PWR_STATE host_state )
 {
     if( host_power_state != host_state )
     {
+		#if DIGITALDASH_GRAPHICS
+    	if( host_state == HOST_PWR_ENABLED ) {
+    		ui_reset();
+    		digitaldash_delay = 250; // Allow time to switch to the splash screen
+    	}
+		#endif
+
+
 #if USB_PWR_CTRL
 #if FORCE_USB_ON
         usb( USB_PWR_ENABLED );
