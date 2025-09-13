@@ -935,22 +935,27 @@ DIGITALDASH_STATUS digitaldash_service( void )
 				Update_LCD_Brightness(0);
 			} else {
 			#endif
-				/* TODO - Adjustments may be needed with real world testing */
-				/* Map the gauge brightness to the LCD driver */
-				uint32_t brightness_adjusted = map( gauge_brightness->pid_value,
-						FORD_MIN_BRIGHTNESS, FORD_MAX_BRIGHTNESS,
-						LCD_MIN_BRIGHTNESS, LCD_MAX_BRIGHTNESS );
+				uint8_t brightness_adjusted = (uint8_t)gauge_brightness->pid_value;
+
+				// Clamp the ford backlight value
+				if(brightness_adjusted >= FORD_MAX_DAY_BRIGHTNESS)
+					brightness_adjusted = FORD_MAX_DAY_BRIGHTNESS;
+				else if (brightness_adjusted <= FORD_MIN_NIGHT_BRIGHTNESS)
+					brightness_adjusted = FORD_MIN_NIGHT_BRIGHTNESS;
+
+				// During night use the ford value w/clamping
+				// During the day, scale to 100% minus 5% each tick below max
+				if(brightness_adjusted >= FORD_MIN_DAY_BRIGHTNESS)
+					brightness_adjusted = LCD_MAX_BRIGHTNESS - ((FORD_MAX_DAY_BRIGHTNESS - brightness_adjusted)*5);
+
+				// Clamp the brightness to the LCD limita
+				if(brightness_adjusted <= LCD_MIN_BRIGHTNESS)
+					brightness_adjusted = LCD_MIN_BRIGHTNESS;
+				else if (brightness_adjusted >= LCD_MAX_BRIGHTNESS)
+					brightness_adjusted = LCD_MAX_BRIGHTNESS;
 
 				/* Default to max brightness if no data has been RX'd */
 				if( gauge_brightness->timestamp == 0 )
-					brightness_adjusted = LCD_MAX_BRIGHTNESS;
-
-				/* Make sure the brightness is within the supported range. */
-				else if( brightness_adjusted <= LCD_MIN_BRIGHTNESS )
-					brightness_adjusted = LCD_MIN_BRIGHTNESS;
-
-				/* Make sure the brightness is within the supported range. */
-				else if( brightness_adjusted >= LCD_MAX_BRIGHTNESS )
 					brightness_adjusted = LCD_MAX_BRIGHTNESS;
 
 				if( digitaldash_get_flag( DD_GUI_ACTIVE ) )
