@@ -715,7 +715,7 @@ static void default_config(void)
 	set_view_gauge_theme(0, 2, GAUGE_THEME_STOCK_RS, true);
 
 	set_view_gauge_pid(0, 0, MODE1_INTAKE_AIR_TEMP_UUID, true);
-	set_view_gauge_units(0, 0, PID_UNITS_RPM, true);
+	set_view_gauge_units(0, 0, PID_UNITS_FAHRENHEIT, true);
 
 	set_view_gauge_pid(0, 1, CALC1_BOOST_VACUUM_UUID, true);
 	set_view_gauge_units(0, 1, PID_UNITS_PSI, true);
@@ -734,10 +734,10 @@ static void default_config(void)
 	set_view_gauge_theme(1, 2, GAUGE_THEME_LINEAR, true);
 
 	set_view_gauge_pid(1, 0, CALC1_BOOST_VACUUM_UUID, true);
-	set_view_gauge_units(1, 0, PID_UNITS_RPM, true);
+	set_view_gauge_units(1, 0, PID_UNITS_PSI, true);
 
 	set_view_gauge_pid(1, 1, MODE1_INTAKE_AIR_TEMP_UUID, true);
-	set_view_gauge_units(1, 1, PID_UNITS_PSI, true);
+	set_view_gauge_units(1, 1, PID_UNITS_FAHRENHEIT, true);
 
 	set_view_gauge_pid(1, 2, MODE1_OIL_TEMP_UUID, true);
 	set_view_gauge_units(1, 2, PID_UNITS_FAHRENHEIT, true);
@@ -753,7 +753,7 @@ static void default_config(void)
 	set_view_gauge_theme(2, 2, GAUGE_THEME_STOCK_RS, true);
 
 	set_view_gauge_pid(2, 0, MODE1_INTAKE_AIR_TEMP_UUID, true);
-	set_view_gauge_units(2, 0, PID_UNITS_RPM, true);
+	set_view_gauge_units(2, 0, PID_UNITS_FAHRENHEIT, true);
 
 	set_view_gauge_pid(2, 1, CALC1_BOOST_VACUUM_UUID, true);
 	set_view_gauge_units(2, 1, PID_UNITS_PSI, true);
