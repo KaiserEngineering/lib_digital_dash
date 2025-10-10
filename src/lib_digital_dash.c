@@ -182,7 +182,7 @@ static void DigitalDash_Reset_PID_Stream( void )
 	    lib_pid_clear_PID( &stream[index] );
 }
 
-static int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
+int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
 {
     /* Iterate through every currently streamed PID and check if the *
      * PID is being streamed                                         */
