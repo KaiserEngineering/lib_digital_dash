@@ -445,13 +445,16 @@ void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data )
     /* TODO: 7E0 is the common tester ID, but others could be used */
     if( id == 0x7E0 )
     {
-        tester_present = TESTER_PRESENT_DELAY;
+    	if( is_flow_control_frame(data) ) {} // Ignore flow control frame
+    	else {
+			tester_present = TESTER_PRESENT_DELAY;
 
-        update_app_flag( DD_TESTER_PRESENT, TESTER_PRESENT );
+			update_app_flag( DD_TESTER_PRESENT, TESTER_PRESENT );
 
-        #if USE_LIB_OBDII
-        OBDII_Pause( &obdii );
-        #endif
+			#if USE_LIB_OBDII
+			OBDII_Pause( &obdii );
+			#endif
+    	}
     }
     #endif
 }
