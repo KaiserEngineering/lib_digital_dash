@@ -170,6 +170,7 @@ static void DigitalDash_Reset_PID( PTR_PID_DATA pid )
     pid->pid_min          = INIT_MIN;
     pid->pid_max          = INIT_MAX;
     pid->devices          = 0;
+    pid->num_activated    = 0;
 }
 
 /* Clear ALL of the PIDs, this should only be called when the *
@@ -180,6 +181,16 @@ static void DigitalDash_Reset_PID_Stream( void )
 
 	for( uint8_t index = 0; index < DD_MAX_PIDS; index++ )
 	    lib_pid_clear_PID( &stream[index] );
+}
+
+static int8_t obdll_find_pid_index(PTR_PID_DATA pid)
+{
+    if (!pid) return -1;
+    for (uint8_t i = 0; i < num_pids; i++) {
+        if (&stream[i] == pid)   // compare addresses
+            return (int8_t)i;
+    }
+    return -1;
 }
 
 int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
@@ -325,6 +336,42 @@ PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 	/* TODO: This should not be reached. For now, the data will just *
 	 * never update.                                                 */
 	return ptr;
+}
+
+uint8_t DigitalDash_Pause_PID_In_Stream( PTR_PID_DATA pid )
+{
+	if( pid == NULL)
+		return 0;
+
+    int8_t idx = obdll_find_pid_index(pid);
+    if (idx < 0) return 0;
+
+    /* Deactivate the device */
+    if (stream[idx].num_activated > 0) {
+        stream[idx].num_activated--;
+    }
+
+	#if USE_LIB_OBDII
+	/* Indicate that devices/activation may have changed */
+	return OBDII_resync(&obdii);
+	#endif
+}
+
+uint8_t DigitalDash_Resume_PID_In_Stream( PTR_PID_DATA pid )
+{
+	if( pid == NULL)
+		return 0;
+
+    int8_t idx = obdll_find_pid_index(pid);
+    if (idx < 0) return 0;
+
+    /* Increment the number of active devices */
+    stream[idx].num_activated++;
+
+	#if USE_LIB_OBDII
+    /* Indicate that devices/activation may have changed */
+    return OBDII_resync(&obdii);
+	#endif
 }
 
 /* Clear all variables except the function callbacks */
