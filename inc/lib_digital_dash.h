@@ -324,10 +324,10 @@ void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data );
 
 void DigitalDash_Add_UART_byte( uint8_t byte );
 
-int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid );
-PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid );
-uint8_t DigitalDash_Pause_PID_In_Stream( PTR_PID_DATA pid );
-uint8_t DigitalDash_Resume_PID_In_Stream( PTR_PID_DATA pid );
+int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid, uint8_t device );
+PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid, uint8_t device );
+uint8_t DigitalDash_Pause_PID_In_Stream( PTR_PID_DATA pid, uint8_t device );
+uint8_t DigitalDash_Resume_PID_In_Stream( PTR_PID_DATA pid, uint8_t device );
 
 #ifdef TEST
 void KE_Flag_Callback( uint16_t flag, uint8_t bit );

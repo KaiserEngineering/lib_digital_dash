@@ -183,7 +183,7 @@ static void DigitalDash_Reset_PID_Stream( void )
 	    lib_pid_clear_PID( &stream[index] );
 }
 
-static int8_t obdll_find_pid_index(PTR_PID_DATA pid)
+static int8_t find_pid_index(PTR_PID_DATA pid)
 {
     if (!pid) return -1;
     for (uint8_t i = 0; i < num_pids; i++) {
@@ -193,7 +193,27 @@ static int8_t obdll_find_pid_index(PTR_PID_DATA pid)
     return -1;
 }
 
-int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
+static PTR_PID_DATA Coprocessor_Add_PID_To_Stream( PTR_PID_DATA pid )
+{
+	return DigitalDash_Add_PID_To_Stream(pid, DD_DEV_COPROCESSOR);
+}
+
+static int Coprocessor_Remove_PID_From_Stream( PTR_PID_DATA pid )
+{
+	return DigitalDash_Remove_PID_From_Stream(pid, DD_DEV_COPROCESSOR);
+}
+
+static PTR_PID_DATA Vehicle_Data_Add_PID_To_Stream( PTR_PID_DATA pid )
+{
+	return DigitalDash_Add_PID_To_Stream(pid, DD_DEV_VEHICLE_DATA);
+}
+
+static int Vehicle_Data_Remove_PID_From_Stream( PTR_PID_DATA pid )
+{
+	return DigitalDash_Remove_PID_From_Stream(pid, DD_DEV_VEHICLE_DATA);
+}
+
+int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid, uint8_t device )
 {
     /* Iterate through every currently streamed PID and check if the *
      * PID is being streamed                                         */
@@ -202,9 +222,9 @@ int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
         /* If so, return a 1 */
         if( &stream[index] == pid )
         {
-            /* Decrement the number of devices */
-            if( stream[index].devices > 0 )
-                stream[index].devices--;
+            /* Clear the number device */
+        	BITCLEAR(stream[index].devices, device);
+        	BITCLEAR(stream[index].num_activated, device);
 
             /* Stop acquiring the PID data if no devices are         *
              * requesting data.                                      */
@@ -260,7 +280,7 @@ int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid )
  * pointer and update the value any time it has new data.            *
  * Lib_digital_dash will also be required to track the number of     *
  * requesters per PID to ensure no stream gets cut prematurely.      */
-PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
+PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid, uint8_t device )
 {
 	/* Declare a NULL pointer */
 	PTR_PID_DATA ptr = NULL;
@@ -286,7 +306,8 @@ PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 		if( stream[i].pid_uuid == pid->pid_uuid )
 		{
 			/* Increment the number of devices */
-			stream[i].devices++;
+			BITSET(stream[i].devices, device);
+			BITSET(stream[i].num_activated, device);
 			return &stream[i];
 		}
 	}
@@ -298,7 +319,8 @@ PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 	stream[slot] = *pid;
 
 	/* Increment the number of devices */
-	stream[slot].devices++;
+	BITSET(stream[slot].devices, device);
+	BITSET(stream[slot].num_activated, device);
 
 	/* Get the pointer of that slot */
 	ptr = &stream[slot];
@@ -338,18 +360,20 @@ PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid )
 	return ptr;
 }
 
-uint8_t DigitalDash_Pause_PID_In_Stream( PTR_PID_DATA pid )
+uint8_t DigitalDash_Pause_PID_In_Stream( PTR_PID_DATA pid, uint8_t device )
 {
 	if( pid == NULL)
 		return 0;
 
-    int8_t idx = obdll_find_pid_index(pid);
+    int8_t idx = find_pid_index(pid);
     if (idx < 0) return 0;
 
     /* Deactivate the device */
-    if (stream[idx].num_activated > 0) {
-        stream[idx].num_activated--;
-    }
+    BITCLEAR(stream[idx].num_activated, device);
+
+	#if USE_LIB_VEHICLE_DATA
+    Vehicle_Data_Resync();
+	#endif
 
 	#if USE_LIB_OBDII
 	/* Indicate that devices/activation may have changed */
@@ -357,16 +381,20 @@ uint8_t DigitalDash_Pause_PID_In_Stream( PTR_PID_DATA pid )
 	#endif
 }
 
-uint8_t DigitalDash_Resume_PID_In_Stream( PTR_PID_DATA pid )
+uint8_t DigitalDash_Resume_PID_In_Stream( PTR_PID_DATA pid, uint8_t device )
 {
 	if( pid == NULL)
 		return 0;
 
-    int8_t idx = obdll_find_pid_index(pid);
+    int8_t idx = find_pid_index(pid);
     if (idx < 0) return 0;
 
     /* Increment the number of active devices */
-    stream[idx].num_activated++;
+    BITSET(stream[idx].num_activated, device);
+
+    #if USE_LIB_VEHICLE_DATA
+    Vehicle_Data_Resync();
+	#endif
 
 	#if USE_LIB_OBDII
     /* Indicate that devices/activation may have changed */
@@ -641,8 +669,8 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
 	coprocessor.init.role      = KE_SECONDARY;
 	#endif
     coprocessor.init.transmit  = ke_tx;                                 /* Function call to transmit UART data to the coprocessor */
-    coprocessor.init.req_pid   = &DigitalDash_Add_PID_To_Stream;        /* Function call to request a PID */
-    coprocessor.init.clear_pid = &DigitalDash_Remove_PID_From_Stream;   /* Function call to remove a PID */
+    coprocessor.init.req_pid   = &Coprocessor_Add_PID_To_Stream;        /* Function call to request a PID */
+    coprocessor.init.clear_pid = &Coprocessor_Remove_PID_From_Stream;   /* Function call to remove a PID */
     coprocessor.init.cooling   = &active_cooling;                       /* Function call to request active cooling */
     coprocessor.init.config_to_json = &config_to_json;                  /* Function call to construct JSON of the config */
     coprocessor.init.json_to_config = &json_to_config;                  /* Function call to apply JSON data to the config */
@@ -682,16 +710,16 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
 #endif
 
 #if USE_LIB_VEHICLE_DATA
-    vehicle.req_pid   = &DigitalDash_Add_PID_To_Stream;        /* Function call to request a PID */
-    vehicle.clear_pid = &DigitalDash_Remove_PID_From_Stream;   /* Function call to remove a PID */
+    vehicle.req_pid   = &Vehicle_Data_Add_PID_To_Stream;        /* Function call to request a PID */
+    vehicle.clear_pid = &Vehicle_Data_Remove_PID_From_Stream;   /* Function call to remove a PID */
 
     Vehicle_Init( &vehicle );
 #endif
 
     /* Start obtaining the gauge brightness */
-    gauge_brightness = DigitalDash_Add_PID_To_Stream( &gauge_brightness_req );
+    gauge_brightness = DigitalDash_Add_PID_To_Stream( &gauge_brightness_req, DD_DEV_SYSTEM );
 
-    engine_speed = DigitalDash_Add_PID_To_Stream( &engine_speed_req );
+    engine_speed = DigitalDash_Add_PID_To_Stream( &engine_speed_req, DD_DEV_SYSTEM );
 
     /* Set the initialized flag */
     update_app_flag( DD_FLG_INIT, DD_INITIALIZED );
