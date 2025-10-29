@@ -213,6 +213,14 @@ static int Vehicle_Data_Remove_PID_From_Stream( PTR_PID_DATA pid )
 	return DigitalDash_Remove_PID_From_Stream(pid, DD_DEV_VEHICLE_DATA);
 }
 
+static int Vehicle_Data_Pause_Resume_PID( PTR_PID_DATA pid, uint8_t enable )
+{
+	if(enable)
+		return DigitalDash_Resume_PID_In_Stream(pid, DD_DEV_VEHICLE_DATA);
+	else
+		return DigitalDash_Pause_PID_In_Stream(pid, DD_DEV_VEHICLE_DATA);
+}
+
 int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid, uint8_t device )
 {
     /* Iterate through every currently streamed PID and check if the *
@@ -712,6 +720,7 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
 #if USE_LIB_VEHICLE_DATA
     vehicle.req_pid   = &Vehicle_Data_Add_PID_To_Stream;        /* Function call to request a PID */
     vehicle.clear_pid = &Vehicle_Data_Remove_PID_From_Stream;   /* Function call to remove a PID */
+    vehicle.pause_resume = &Vehicle_Data_Pause_Resume_PID;      /* Function call to remove a PID */
 
     Vehicle_Init( &vehicle );
 #endif
