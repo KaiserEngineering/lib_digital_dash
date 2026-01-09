@@ -138,7 +138,7 @@ DD_FAN_CTRL fan                           = NULL;
 #if HOST_CTRL_ACTIVE
 DD_HOST_CTRL host                         = NULL;
 #endif
-#if USB_PWR_CTRL
+#if USB_CTRL_ACTIVE
 DD_USB_CTRL usb                           = NULL;
 #endif
 #if HW_CAN_FILTERS
@@ -680,13 +680,17 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     coprocessor.init.req_pid   = &Coprocessor_Add_PID_To_Stream;        /* Function call to request a PID */
     coprocessor.init.clear_pid = &Coprocessor_Remove_PID_From_Stream;   /* Function call to remove a PID */
     coprocessor.init.cooling   = &active_cooling;                       /* Function call to request active cooling */
+#if USB_LIB_DIGITALDASH_CONFIG
     coprocessor.init.config_to_json = &config_to_json;                  /* Function call to construct JSON of the config */
     coprocessor.init.json_to_config = &json_to_config;                  /* Function call to apply JSON data to the config */
     coprocessor.init.options_to_json = &options_to_json;                /* Function call to construct JSON of the option list */
+#endif
     coprocessor.init.pid_list_to_json = &pid_list_to_json;
-    coprocessor.init.get_rgba_crc = &calc_crc32;
     coprocessor.init.enter_bootloader = bootloader_activate;
+#if BACKGROUND_IMG_SAVE
     coprocessor.init.save_rgba = background_save;                       /* Function call save png bytes to storage */
+    coprocessor.init.get_rgba_crc = &calc_crc32;
+#endif
     coprocessor.init.firmware_version_major  = FIRMWARE_VERSION_MAJOR;  /* Major firmware version */
     coprocessor.init.firmware_version_minor  = FIRMWARE_VERSION_MINOR;  /* Minor firmware version */
     coprocessor.init.firmware_version_hotfix = FIRMWARE_VERSION_HOTFIX; /* Hot fix firmware version */
@@ -791,7 +795,7 @@ static void DigitalDash_PowerCycle()
     /* Let the power rails settle */
     digitaldash_delay = POWER_CYCLE_TIME;
 }
-
+#if DIGITALDASH_GRAPHICS
 static void default_config(void)
 {
 	// Set splash screen to 5s
@@ -928,6 +932,7 @@ static void default_config(void)
 	// Update the EE version
 	set_general_ee_version(0, EE_VERSION_UUID, true);
 }
+#endif
 
 DIGITALDASH_STATUS digitaldash_service( void )
 {
@@ -936,9 +941,11 @@ DIGITALDASH_STATUS digitaldash_service( void )
         /* If a delay was requested by the Digital Dash application, block all other functions *
          * until the delay is complete. This will NOT block any other application code         */
         if( digitaldash_delay > 0 ) {
-        	if( digitaldash_get_flag( DD_GUI_ACTIVE ) == GUI_IS_ACTIVE )
-        		if( digitaldash_shutdown > 0 )
-        			ui_service();
+			#if DIGITALDASH_GRAPHICS
+				if( digitaldash_get_flag( DD_GUI_ACTIVE ) == GUI_IS_ACTIVE )
+					if( digitaldash_shutdown > 0 )
+						ui_service();
+			#endif
         }
 
         /* Turn off the host */

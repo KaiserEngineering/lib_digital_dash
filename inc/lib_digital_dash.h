@@ -4,7 +4,7 @@
 #define DIGITALDASH_GRAPHICS_ONLY (DIGITALDASH_GRAPHICS & !DIGITALDASH_DATA_ACQ)
 #define DIGITALDASH_DATA_ACQ_ONLY (DIGITALDASH_DATA_ACQ & !DIGITALDASH_GRAPHICS)
 
-#include "../ke_conf.h"
+#include "ke_conf.h"
 #include "stddef.h"
 #if DIGITALDASH_GRAPHICS
 #include "lvgl.h"
@@ -57,7 +57,7 @@ typedef enum _host_pwr_state {
 } HOST_PWR_STATE, *PHOST_PWR_STATE;
 #endif
 
-#if USB_PWR_CTRL
+#if USB_CTRL_ACTIVE
 /********************************************************************
 * USB power enable                                                 *
 ********************************************************************/
@@ -174,7 +174,7 @@ typedef void (*DD_FAN_CTRL)( FAN_PWR_STATE state );
 typedef void (*DD_HOST_CTRL)( HOST_PWR_STATE state );
 #endif
 
-#if USB_PWR_CTRL
+#if USB_CTRL_ACTIVE
 /* The digital dash will call this function when USB power   *
  * should be powered on                                      */
 typedef void (*DD_USB_CTRL)( USB_PWR_STATE state );
@@ -275,7 +275,7 @@ typedef struct _digitaldash_config {
     DD_HOST_CTRL dd_host_ctrl;
 #endif
 
-#if USB_PWR_CTRL
+#if USB_CTRL_ACTIVE
     /* The digital dash will call this function when USB power   *
      * should be powered on                                      */
     DD_USB_CTRL dd_usb;
