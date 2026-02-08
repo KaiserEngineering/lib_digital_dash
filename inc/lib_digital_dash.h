@@ -46,6 +46,16 @@ typedef enum _sd_card_state {
 } SD_CARD_STATE, *PSD_CARD_STATE;
 #endif
 
+#if USB_STATE_ACTIVE
+/********************************************************************
+* USB State variables                                               *
+********************************************************************/
+typedef enum _usb_state {
+    USB_STATE_NOT_PRESENT,
+	USB_STATE_PRESENT
+} USB_STATE, *PUSB_STATE;
+#endif
+
 #if HOST_CTRL_ACTIVE
 /********************************************************************
 * Host power enable                                                 *
@@ -103,6 +113,7 @@ typedef enum _digitaldash_operating_state {
 typedef enum _digitaldash_flags{
 
     DD_FLG_SD_CARD,
+	DD_FLG_USB_STATE,
     DD_FLG_HOST_PWR,
     DD_FLG_INIT,
     DD_GUI_ACTIVE,
@@ -142,6 +153,15 @@ void dd_update_sd_card_state( SD_CARD_STATE state );
  * current SD card state. The main application shall call    *
  * "dd_update_sd_card_state" when this callback occurs.     */
 typedef void (*DD_GET_SD_CARD_STATE)( void );
+#endif
+
+/********************************************************************
+* USB State functions                                               *
+********************************************************************/
+#if USB_STATE_ACTIVE
+/* The main application shall call this function to indicate *
+ * when the USB state changes                                */
+void dd_update_usb_state( USB_STATE state );
 #endif
 
 #if KE_ACTIVE

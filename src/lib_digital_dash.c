@@ -41,6 +41,8 @@
 /* Number of PIDs being streamed */
 static volatile uint32_t num_pids = 0;
 
+static uint8_t spoof_data = 1;
+
 static uint8_t host_power_state = HOST_PWR_DISABLED;
 
 /* PID array containing all streamed data */
@@ -114,10 +116,8 @@ static volatile uint32_t tester_present = 0;
 static uint32_t ke_uart_count = 0;
 #endif
 
-#if SPOOF_DATA
 #define SPOOF_INTERVAL_T      25 // ms
 static uint32_t spoof_count = 0;
-#endif
 
 /* Application callbacks */
 #if SD_CARD_ACTIVE
@@ -478,6 +478,19 @@ static void update_app_flag( DIGITALDASH_FLAG flag, uint8_t value )
 void dd_update_sd_card_state( SD_CARD_STATE state )
 {
     update_app_flag( DD_FLG_SD_CARD, state );
+}
+#endif
+
+#if USB_STATE_ACTIVE
+/* The main application shall call this function to indicate *
+ * when the USB state changes                                */
+void dd_update_usb_state( USB_STATE state )
+{
+    update_app_flag( DD_FLG_USB_STATE, state );
+    if( state == USB_STATE_PRESENT )
+    	spoof_data = 1;
+    else
+    	spoof_data = 0;
 }
 #endif
 
@@ -1093,84 +1106,47 @@ DIGITALDASH_STATUS digitaldash_service( void )
     }
 }
 
-#if SPOOF_DATA
-float engine_rpm = 900;
-float turbo = 0;
-float oil_temp = 0;
-float baro = 101.4;
-float pid_map = 0;
-#define TEMP_VARIATION_RANGE 10.0f
-#endif
-
 void digitaldash_tick( void )
 {
-    #if SPOOF_DATA
-    spoof_count = (spoof_count + 1) % SPOOF_INTERVAL_T;
-    if( spoof_count == 0 )
-    {
-        for( uint8_t i = 0; i < DD_MAX_PIDS; i++ )
-        {
-            if( stream[i].pid_uuid == MODE1_ENGINE_SPEED_UUID )
-            {
-                stream[i].timestamp++;
-                engine_rpm += 10;
-                stream[i].pid_value = engine_rpm;
-                if( engine_rpm >= 8000 )
-                    engine_rpm = 900;
-            } else if ( stream[i].pid_uuid == MODE1_BOOST_UUID )
-            {
-                stream[i].timestamp++;
-                turbo += 0.5;
-                stream[i].pid_value = turbo;
-                if( turbo >= 255 )
-                    turbo = 0;
-            } else if ( stream[i].pid_uuid == MODE1_OIL_TEMP_UUID )
-            {
-                stream[i].timestamp++;
+	if( spoof_data )
+	{
+		spoof_count = (spoof_count + 1) % SPOOF_INTERVAL_T;
+		if( spoof_count == 0 )
+		{
+			for( uint8_t i = 0; i < num_pids; i++ )
+			{
+				if((stream[i].num_activated > 0) & (stream[i].acquisition_type != PID_ASSIGNED_TO_VEHICLE_DATA))
+				{
+					//convert_units( stream[i].pid_unit, stream[i].base_unit, &stream[i].pid_value);
+					stream[i].pid_value += ((stream[i].upper_limit - stream[i].lower_limit)/(100+(i*3)));
+					//convert_units( stream[i].base_unit, stream[i].pid_unit, &stream[i].pid_value);
+					if( stream[i].pid_value > stream[i].upper_limit )
+						stream[i].pid_value = stream[i].lower_limit;
+					else if( stream[i].pid_value < stream[i].lower_limit )
+						stream[i].pid_value = stream[i].lower_limit;
+					stream[i].timestamp++;
+				}
+			}
+		}
+	}
 
-                // Generate a random float between -5 and +5
-                float variation = ((float)(rand() % (int)(TEMP_VARIATION_RANGE * 20 + 1)) / 10.0f) - TEMP_VARIATION_RANGE;
-
-                oil_temp += variation;
-                stream[i].pid_value = oil_temp;
-
-                float middle = (stream[i].upper_limit - stream[i].lower_limit)/2;
-
-                if( oil_temp >= stream[i].upper_limit )
-                    oil_temp = middle;
-                if( oil_temp <= stream[i].lower_limit )
-                    oil_temp = middle ;
-            } else if ( stream[i].pid_uuid == MODE1_MANIFOLD_ABS_PRESS_UUID )
-            {
-                stream[i].timestamp++;
-                pid_map += 0.65;
-                stream[i].pid_value = pid_map;
-                if( pid_map >= 253 )
-                    pid_map = 0;
-            } else if ( stream[i].pid_uuid == MODE1_BAROMETRIC_PRESSURE_UUID )
-            {
-                stream[i].timestamp++;
-                stream[i].pid_value = baro;
-            }
-        }
-    }
-    #endif
-
-    if( digitaldash_delay > 0 )
+    if( digitaldash_delay > 0 ) {
         digitaldash_delay--;
+    }
 
 	#if DIGITALDASH_DATA_ACQ_ONLY
-    if( digitaldash_app_wtchdg > 0 )
+    if( digitaldash_app_wtchdg > 0 ) {
         digitaldash_app_wtchdg--;
+    }
 	#endif
 
-    if( digitaldash_bklt_wtchdg > 0 )
-        digitaldash_bklt_wtchdg--;
+    if( digitaldash_bklt_wtchdg > 0 ) {
+    	digitaldash_bklt_wtchdg--;
+    }
 
-	#if !SPOOF_DATA
-    if( digitaldash_shutdown > 0 )
-        digitaldash_shutdown--;
-	#endif
+	if( (spoof_data == 0) & (digitaldash_shutdown > 0) ) {
+		digitaldash_shutdown--;
+	}
 
 	#if USE_LIB_OBDII
     if( tester_present > 0 ) {
