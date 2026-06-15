@@ -157,11 +157,6 @@ DD_BOOTLOADER_ACTIVATION bootloader_activate    = NULL;
 DIGITALDASH_INIT_STATUS DigitalDash_Config_NULL_Check( void );
 static void host_power( HOST_PWR_STATE host_state );
 
-static uint32_t map(uint32_t in, uint32_t inMin, uint32_t inMax, uint32_t outMin, uint32_t outMax)
-{
-    return (((in - inMin)*(outMax - outMin))/(inMax - inMin)) + outMin;
-}
-
 static void DigitalDash_Reset_PID( PTR_PID_DATA pid )
 {
     pid->acquisition_type = PID_UNASSIGNED;
