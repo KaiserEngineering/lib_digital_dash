@@ -16,10 +16,6 @@
 #include "lib_ke_protocol.h"
 #endif
 
-#if USE_UNIT_CONVERSION
-#include "lib_unit_conversion.h"
-#endif
-
 #if USE_LIB_OBDII
 #include "lib_obdii.h"
 #endif

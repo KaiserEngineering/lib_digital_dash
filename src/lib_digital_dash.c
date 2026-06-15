@@ -1117,14 +1117,26 @@ void digitaldash_tick( void )
 			{
 				if((stream[i].num_activated > 0) & (stream[i].acquisition_type != PID_ASSIGNED_TO_VEHICLE_DATA))
 				{
-					//convert_units( stream[i].pid_unit, stream[i].base_unit, &stream[i].pid_value);
-					stream[i].pid_value += ((stream[i].upper_limit - stream[i].lower_limit)/(100+(i*3)));
-					//convert_units( stream[i].base_unit, stream[i].pid_unit, &stream[i].pid_value);
-					if( stream[i].pid_value > stream[i].upper_limit )
-						stream[i].pid_value = stream[i].lower_limit;
-					else if( stream[i].pid_value < stream[i].lower_limit )
-						stream[i].pid_value = stream[i].lower_limit;
-					stream[i].timestamp++;
+					float spoof_value = stream[i].pid_value;
+					float lower_limit = stream[i].lower_limit;
+					float upper_limit = stream[i].upper_limit;
+
+					// Convert the values to the PID units for easier manipulation
+					convert_units( stream[i].pid_unit, stream[i].base_unit, &spoof_value );
+					convert_units( stream[i].pid_unit, stream[i].base_unit, &lower_limit );
+					convert_units( stream[i].pid_unit, stream[i].base_unit, &upper_limit );
+
+					// Increment the spoof value by a small amount, scaled to the range of 
+					// the PID and the index to create some variability between PIDs
+					spoof_value += ((upper_limit - lower_limit)/(100+(i*3)));
+
+					// Wrap the value around if it exceeds limits
+					if( spoof_value > upper_limit )
+						spoof_value = lower_limit;
+					else if( spoof_value < lower_limit )
+						spoof_value = lower_limit;
+
+					update_pid_data(&stream[i], spoof_value, stream[i].timestamp + 1);
 				}
 			}
 		}
