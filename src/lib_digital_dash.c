@@ -78,10 +78,10 @@ static VEHICLE_DATA_MANAGER vehicle;
 #endif
 
 /* Configure the Digital Dash to sync the backlight with the vehicle's lighting */
-static PID_DATA gauge_brightness_req = { .pid_uuid = SNIFF_GAUGE_ILLUM_LEVEL_UUID, .pid_unit = PID_UNITS_NONE, .pid_value = 100 };
+static PID_DATA gauge_brightness_req = { .pid_uuid = PID_UUID(SNIFF, 0x01C8U), .pid_unit = PID_UNITS_NONE, .pid_value = 100 };
 static PTR_PID_DATA gauge_brightness;
 
-static PID_DATA engine_speed_req = { .pid_uuid = MODE1_ENGINE_SPEED_UUID, .pid_unit = PID_UNITS_RPM, .pid_value = 0 };
+static PID_DATA engine_speed_req = { .pid_uuid = PID_UUID(MODE1, 0x000CU), .pid_unit = PID_UNITS_RPM, .pid_value = 0 };
 static PTR_PID_DATA engine_speed;
 
 /* Current LCD backlight brightness */
@@ -822,13 +822,13 @@ static void default_config(void)
 	set_view_gauge_theme(0, 1, GAUGE_THEME_STOCK_RS, true);
 	set_view_gauge_theme(0, 2, GAUGE_THEME_STOCK_RS, true);
 
-	set_view_gauge_pid(0, 0, MODE1_INTAKE_AIR_TEMP_UUID, true);
+	set_view_gauge_pid(0, 0, PID_UUID(MODE1, 0x000FU), true);
 	set_view_gauge_units(0, 0, PID_UNITS_FAHRENHEIT, true);
 
-	set_view_gauge_pid(0, 1, CALC1_BOOST_VACUUM_UUID, true);
+	set_view_gauge_pid(0, 1, PID_UUID(CALC1, 0x006FU), true);
 	set_view_gauge_units(0, 1, PID_UNITS_PSI, true);
 
-	set_view_gauge_pid(0, 2, MODE1_OIL_TEMP_UUID, true);
+	set_view_gauge_pid(0, 2, PID_UUID(MODE1, 0x005CU), true);
 	set_view_gauge_units(0, 2, PID_UNITS_FAHRENHEIT, true);
 	#endif
 
@@ -841,13 +841,13 @@ static void default_config(void)
 	set_view_gauge_theme(1, 1, GAUGE_THEME_LINEAR, true);
 	set_view_gauge_theme(1, 2, GAUGE_THEME_LINEAR, true);
 
-	set_view_gauge_pid(1, 0, CALC1_BOOST_VACUUM_UUID, true);
+	set_view_gauge_pid(1, 0, PID_UUID(CALC1, 0x006FU), true);
 	set_view_gauge_units(1, 0, PID_UNITS_PSI, true);
 
-	set_view_gauge_pid(1, 1, MODE1_INTAKE_AIR_TEMP_UUID, true);
+	set_view_gauge_pid(1, 1, PID_UUID(MODE1, 0x000FU), true);
 	set_view_gauge_units(1, 1, PID_UNITS_FAHRENHEIT, true);
 
-	set_view_gauge_pid(1, 2, MODE1_OIL_TEMP_UUID, true);
+	set_view_gauge_pid(1, 2, PID_UUID(MODE1, 0x005CU), true);
 	set_view_gauge_units(1, 2, PID_UNITS_FAHRENHEIT, true);
 	#endif
 
@@ -860,20 +860,20 @@ static void default_config(void)
 	set_view_gauge_theme(2, 1, GAUGE_THEME_STOCK_RS, true);
 	set_view_gauge_theme(2, 2, GAUGE_THEME_STOCK_RS, true);
 
-	set_view_gauge_pid(2, 0, MODE1_INTAKE_AIR_TEMP_UUID, true);
+	set_view_gauge_pid(2, 0, PID_UUID(MODE1, 0x000FU), true);
 	set_view_gauge_units(2, 0, PID_UNITS_FAHRENHEIT, true);
 
-	set_view_gauge_pid(2, 1, CALC1_BOOST_VACUUM_UUID, true);
+	set_view_gauge_pid(2, 1, PID_UUID(CALC1, 0x006FU), true);
 	set_view_gauge_units(2, 1, PID_UNITS_PSI, true);
 
-	set_view_gauge_pid(2, 2, MODE1_OIL_TEMP_UUID, true);
+	set_view_gauge_pid(2, 2, PID_UUID(MODE1, 0x005CU), true);
 	set_view_gauge_units(2, 2, PID_UNITS_FAHRENHEIT, true);
 	#endif
 
 	// Dynamic 0
 	#if MAX_DYNAMICS >= 1
 	set_dynamic_enable(0, DYNAMIC_STATE_ENABLED, true);
-	set_dynamic_pid(0, CALC1_CRUISE_CONTROL_OFF_BUTTON_TOGGLE_UUID, true);
+	set_dynamic_pid(0, PID_UUID(CALC1, 0x0302U), true);
 	set_dynamic_units(0, PID_UNITS_NONE, true);
 	set_dynamic_priority(0, DYNAMIC_PRIORITY_HIGH, true);
 	set_dynamic_compare(0, DYNAMIC_COMPARISON_GREATER_THAN, true);
@@ -884,7 +884,7 @@ static void default_config(void)
 	// Dynamic 1
 	#if MAX_DYNAMICS >= 2
 	set_dynamic_enable(1, DYNAMIC_STATE_DISABLED, true);
-	set_dynamic_pid(1, CALC1_BOOST_VACUUM_UUID, true);
+	set_dynamic_pid(1, PID_UUID(CALC1, 0x006FU), true);
 	set_dynamic_units(1, PID_UNITS_PSI, true);
 	set_dynamic_priority(1, DYNAMIC_PRIORITY_MEDIUM, true);
 	set_dynamic_compare(1, DYNAMIC_COMPARISON_GREATER_THAN, true);
@@ -895,7 +895,7 @@ static void default_config(void)
 	// Dynamic 2
 	#if MAX_DYNAMICS >= 3
 	set_dynamic_enable(2, DYNAMIC_STATE_ENABLED, true);
-	set_dynamic_pid(2, CALC1_BOOST_VACUUM_UUID, true);
+	set_dynamic_pid(2, PID_UUID(CALC1, 0x006FU), true);
 	set_dynamic_units(2, PID_UNITS_PSI, true);
 	set_dynamic_priority(2, DYNAMIC_PRIORITY_LOW, true);
 	set_dynamic_compare(2, DYNAMIC_COMPARISON_GREATER_THAN, true);
@@ -908,7 +908,7 @@ static void default_config(void)
 	// Alert 0
 	#if MAX_ALERTS >= 1
 	set_alert_enable(0, ALERT_STATE_DISABLED, true );
-	set_alert_pid(0, MODE1_ENGINE_SPEED_UUID, true );
+	set_alert_pid(0, PID_UUID(MODE1, 0x000CU), true );
 	set_alert_units(0, PID_UNITS_RPM, true );
 	set_alert_compare(0, ALERT_COMPARISON_GREATER_THAN_OR_EQUAL_TO, true );
 	set_alert_threshold(0, 6500, true );
@@ -919,7 +919,7 @@ static void default_config(void)
 	// Alert 1
 	#if MAX_ALERTS >= 2
 	set_alert_enable(1, ALERT_STATE_DISABLED, true );
-	set_alert_pid(1, MODE1_OIL_TEMP_UUID, true );
+	set_alert_pid(1, PID_UUID(MODE1, 0x005CU), true );
 	set_alert_units(1, PID_UNITS_FAHRENHEIT, true );
 	set_alert_compare(1, ALERT_COMPARISON_GREATER_THAN_OR_EQUAL_TO, true );
 	set_alert_threshold(1, 300, true );
@@ -932,7 +932,7 @@ static void default_config(void)
 	for( uint8_t i = 2; i < MAX_ALERTS; i++)
 	{
 		set_alert_enable(i, ALERT_STATE_DISABLED, true );
-		set_alert_pid(i, MODE1_OIL_TEMP_UUID, true );
+		set_alert_pid(i, PID_UUID(MODE1, 0x005CU), true );
 		set_alert_units(i, PID_UNITS_FAHRENHEIT, true );
 		set_alert_compare(i, ALERT_COMPARISON_GREATER_THAN_OR_EQUAL_TO, true );
 		set_alert_threshold(i, 300, true );
