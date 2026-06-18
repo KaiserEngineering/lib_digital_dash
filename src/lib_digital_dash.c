@@ -29,6 +29,7 @@
 *************************************************************************************/
 
 #include "lib_digital_dash.h"
+#include "cjson_shared.h"
 
 /* Define bit shifting macros */
 #define BITSET(word,nbit)   ((word) |=  (1<<(nbit)))
@@ -605,6 +606,8 @@ DIGITALDASH_INIT_STATUS DigitalDash_Config_NULL_Check( void )
 
 DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
 {
+    cjson_shared_init();
+
 	/* Reset the Digital Dash */
 	DigitalDash_Reset_App();
 
@@ -706,6 +709,7 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     coprocessor.rx_buffer_size = KE_MAX_RX_PAYLOAD;
     coprocessor.tx_buffer = uart_tx_buffer;
     coprocessor.rx_buffer = uart_rx_buffer;
+    cjson_shared_set_buffer(coprocessor.rx_buffer, coprocessor.rx_buffer_size);
 
     /* Initialize the KE library */
     if( KE_Initialize( &coprocessor ) != KE_OK )
