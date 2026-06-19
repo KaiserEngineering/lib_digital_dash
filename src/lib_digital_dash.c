@@ -810,6 +810,7 @@ static void DigitalDash_PowerCycle()
 #if DIGITALDASH_GRAPHICS
 static void default_config(void)
 {
+	settings_erase_eeprom();
 	// Set splash screen to 5s
 	set_general_splash(0, 5, true);
 
