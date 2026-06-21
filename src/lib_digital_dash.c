@@ -539,14 +539,29 @@ void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data )
     {
     	if( is_flow_control_frame(data) ) {} // Ignore flow control frame
     	else {
-			tester_present = TESTER_PRESENT_DELAY;
+    		switch(get_general_obdii_pause(0))
+    		{
+    			case OBDII_PAUSE_30_SECONDS:
+    				tester_present = 30000;
+    				break;
+    			case OBDII_PAUSE_UNTIL_POWER_CYCLE:
+    				tester_present = 0xFFFFFFFF;
+    				break;
+    			case OBDII_PAUSE_10_SECONDS:
+    			default:
+    				tester_present = 10000;
+    				break;
+    		}
 
 			update_app_flag( DD_TESTER_PRESENT, TESTER_PRESENT );
 
 			#if DIGITALDASH_GRAPHICS
-			if( get_general_can_bus_mode(0) == CAN_BUS_MODE_NORMAL_MODE ) {
-				set_system_message(SYSTEM_MESSAGE_TESTER_PRESENT,
-								   TESTER_PRESENT_DELAY, true);
+			if( get_general_can_bus_mode(0) == CAN_BUS_MODE_NORMAL_MODE &&
+					get_general_obdii_message(0) == OBDII_MESSAGE_POPUP_MESSAGE) {
+				if( tester_present > 30000 )
+					set_system_message(SYSTEM_MESSAGE_TESTER_PRESENT, tester_present, false);
+				else
+					set_system_message(SYSTEM_MESSAGE_TESTER_PRESENT, tester_present, true);
 				#endif
 			}
 
