@@ -543,6 +543,13 @@ void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data )
 
 			update_app_flag( DD_TESTER_PRESENT, TESTER_PRESENT );
 
+			#if DIGITALDASH_GRAPHICS
+			if( get_general_can_bus_mode(0) == CAN_BUS_MODE_NORMAL_MODE ) {
+				set_system_message(SYSTEM_MESSAGE_TESTER_PRESENT,
+								   TESTER_PRESENT_DELAY, true);
+				#endif
+			}
+
 			#if USE_LIB_OBDII
 			OBDII_Pause( &obdii );
 			#endif
