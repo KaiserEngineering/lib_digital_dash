@@ -49,6 +49,26 @@ static uint8_t host_power_state = HOST_PWR_DISABLED;
 /* PID array containing all streamed data */
 static PID_DATA stream[DD_MAX_PIDS];
 
+#if USE_LIB_OBDII
+/* True when at least one streamed PID is sourced from OBD-II. */
+static volatile bool obdii_communication_active = false;
+
+static void refresh_obdii_communication_active(void)
+{
+	obdii_communication_active = false;
+
+	for (uint8_t index = 0; index < DD_MAX_PIDS; index++)
+	{
+		if (stream[index].acquisition_type == PID_ASSIGNED_TO_OBDII
+				&& (stream[index].num_activated > 0))
+		{
+			obdii_communication_active = true;
+			break;
+		}
+	}
+}
+#endif
+
 /* Core application flags to track current state of hardware */
 static volatile uint32_t app_flags = 0;
 
@@ -175,6 +195,10 @@ static void DigitalDash_Reset_PID_Stream( void )
 {
 	num_pids = 0x00000000;
 
+	#if USE_LIB_OBDII
+	obdii_communication_active = false;
+	#endif
+
 	for( uint8_t index = 0; index < DD_MAX_PIDS; index++ )
 	    lib_pid_clear_PID( &stream[index] );
 }
@@ -266,6 +290,10 @@ int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid, uint8_t device )
                 lib_pid_clear_PID( &stream[index] );
 
                 num_pids--;
+
+				#if USE_LIB_OBDII
+				refresh_obdii_communication_active();
+				#endif
             }
 
             return 1;
@@ -355,6 +383,7 @@ PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid, uint8_t device )
 	/* Add the PID to the OBDII stream if supported */
 	if( OBDII_add_PID_request( &obdii, ptr ) == OBDII_OK ) {
 		ptr->acquisition_type = PID_ASSIGNED_TO_OBDII;
+		obdii_communication_active = true;
 		return ptr;
 	}
 	#endif
@@ -380,6 +409,7 @@ uint8_t DigitalDash_Pause_PID_In_Stream( PTR_PID_DATA pid, uint8_t device )
 	#endif
 
 	#if USE_LIB_OBDII
+	refresh_obdii_communication_active();
 	/* Indicate that devices/activation may have changed */
 	return OBDII_resync(&obdii);
 	#endif
@@ -401,6 +431,7 @@ uint8_t DigitalDash_Resume_PID_In_Stream( PTR_PID_DATA pid, uint8_t device )
 	#endif
 
 	#if USE_LIB_OBDII
+    refresh_obdii_communication_active();
     /* Indicate that devices/activation may have changed */
     return OBDII_resync(&obdii);
 	#endif
@@ -556,7 +587,8 @@ void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data )
 			update_app_flag( DD_TESTER_PRESENT, TESTER_PRESENT );
 
 			#if DIGITALDASH_GRAPHICS
-			if( get_general_can_bus_mode(0) == CAN_BUS_MODE_NORMAL_MODE &&
+			if( obdii_communication_active &&
+					get_general_can_bus_mode(0) == CAN_BUS_MODE_NORMAL_MODE &&
 					get_general_obdii_message(0) == OBDII_MESSAGE_POPUP_MESSAGE) {
 				if( tester_present > 30000 )
 					set_system_message(SYSTEM_MESSAGE_TESTER_PRESENT, tester_present, false);
