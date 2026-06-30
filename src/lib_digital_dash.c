@@ -82,6 +82,9 @@ static uint8_t uart_tx_buffer[KE_MAX_TX_PAYLOAD] = {0};
 static uint8_t uart_rx_buffer[KE_MAX_RX_PAYLOAD] = {0};
 #endif
 
+/* Shared cJSON workspace, independent of the KE transmit/receive buffers. */
+static uint8_t cjson_buffer[CJSON_BUFFER_SIZE] = {0};
+
 #if USE_LIB_OBDII
 /* Declare an OBDII packet manager */
 static OBDII_PACKET_MANAGER obdii;
@@ -200,7 +203,9 @@ static void DigitalDash_Reset_PID_Stream( void )
 	#endif
 
 	for( uint8_t index = 0; index < DD_MAX_PIDS; index++ )
+	{
 	    lib_pid_clear_PID( &stream[index] );
+	}
 }
 
 static int8_t find_pid_index(PTR_PID_DATA pid)
@@ -661,6 +666,7 @@ DIGITALDASH_INIT_STATUS DigitalDash_Config_NULL_Check( void )
 DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
 {
     cjson_shared_init();
+    cjson_shared_set_buffer(cjson_buffer, sizeof(cjson_buffer));
 
 	/* Reset the Digital Dash */
 	DigitalDash_Reset_App();
@@ -763,7 +769,6 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     coprocessor.rx_buffer_size = KE_MAX_RX_PAYLOAD;
     coprocessor.tx_buffer = uart_tx_buffer;
     coprocessor.rx_buffer = uart_rx_buffer;
-    cjson_shared_set_buffer(coprocessor.rx_buffer, coprocessor.rx_buffer_size);
 
     /* Initialize the KE library */
     if( KE_Initialize( &coprocessor ) != KE_OK )
