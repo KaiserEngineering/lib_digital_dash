@@ -211,8 +211,8 @@ static void DigitalDash_Reset_PID_Stream( void )
 static int8_t find_pid_index(PTR_PID_DATA pid)
 {
     if (!pid) return -1;
-    for (uint8_t i = 0; i < num_pids; i++) {
-        if (&stream[i] == pid)   // compare addresses
+    for (uint8_t i = 0; i < DD_MAX_PIDS; i++) {
+        if ((stream[i].pid_uuid != PID_UNASSIGNED) && (&stream[i] == pid))
             return (int8_t)i;
     }
     return -1;
@@ -246,6 +246,18 @@ static int Vehicle_Data_Pause_Resume_PID( PTR_PID_DATA pid, uint8_t enable )
 		return DigitalDash_Pause_PID_In_Stream(pid, DD_DEV_VEHICLE_DATA);
 }
 
+#if USB_LIB_DIGITALDASH_CONFIG && DIGITALDASH_GRAPHICS
+static bool apply_config_and_request_ui_rebuild(const char *json_str)
+{
+	bool success = json_to_config(json_str);
+
+	if (success)
+		ui_request_rebuild();
+
+	return success;
+}
+#endif
+
 int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid, uint8_t device )
 {
     /* Iterate through every currently streamed PID and check if the *
@@ -253,7 +265,7 @@ int DigitalDash_Remove_PID_From_Stream( PTR_PID_DATA pid, uint8_t device )
     for( uint8_t index = 0; index < DD_MAX_PIDS; index++ )
     {
         /* If so, return a 1 */
-        if( &stream[index] == pid )
+        if( (stream[index].pid_uuid != PID_UNASSIGNED) && (&stream[index] == pid) )
         {
             /* Clear the number device */
         	BITCLEAR(stream[index].devices, device);
@@ -322,8 +334,22 @@ PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid, uint8_t device )
 	/* Declare a NULL pointer */
 	PTR_PID_DATA ptr = NULL;
 
-	uint8_t slot = 0;
+	/* Iterate through every currently streamed PID and check if the *
+	 * PID is being streamed                                         */
+	for( uint8_t i = 0; i < DD_MAX_PIDS; i++ )
+	{
+		/* If so, return the pointer */
+		if( (stream[i].pid_uuid != PID_UNASSIGNED) &&
+			(stream[i].pid_uuid == pid->pid_uuid) )
+		{
+			/* Increment the number of devices */
+			BITSET(stream[i].devices, device);
+			BITSET(stream[i].num_activated, device);
+			return &stream[i];
+		}
+	}
 
+	uint8_t slot = 0;
 	for( slot = 0; slot < DD_MAX_PIDS; slot++)
 	{
 	    if( stream[slot].pid_uuid == PID_UNASSIGNED )
@@ -334,20 +360,6 @@ PTR_PID_DATA DigitalDash_Add_PID_To_Stream( PTR_PID_DATA pid, uint8_t device )
     if (slot >= DD_MAX_PIDS) {
         return NULL;  // No space available
     }
-
-	/* Iterate through every currently streamed PID and check if the *
-	 * PID is being streamed                                         */
-	for( uint8_t i = 0; i < num_pids; i++ )
-	{
-		/* If so, return the pointer */
-		if( stream[i].pid_uuid == pid->pid_uuid )
-		{
-			/* Increment the number of devices */
-			BITSET(stream[i].devices, device);
-			BITSET(stream[i].num_activated, device);
-			return &stream[i];
-		}
-	}
 
 	/* Clear any data the PID has */
 	DigitalDash_Reset_PID( pid );
@@ -753,7 +765,11 @@ DIGITALDASH_INIT_STATUS digitaldash_init( PDIGITALDASH_CONFIG config )
     coprocessor.init.cooling   = &active_cooling;                       /* Function call to request active cooling */
 #if USB_LIB_DIGITALDASH_CONFIG
     coprocessor.init.config_to_json = &config_to_json;                  /* Function call to construct JSON of the config */
-    coprocessor.init.json_to_config = &json_to_config;                  /* Function call to apply JSON data to the config */
+	#if DIGITALDASH_GRAPHICS
+    coprocessor.init.json_to_config = &apply_config_and_request_ui_rebuild; /* Apply config, then rebuild UI in ui_service() */
+	#else
+    coprocessor.init.json_to_config = &json_to_config;
+	#endif
     coprocessor.init.options_to_json = &options_to_json;                /* Function call to construct JSON of the option list */
 #endif
     coprocessor.init.pid_list_to_json = &pid_list_to_json;
@@ -1172,9 +1188,11 @@ void digitaldash_tick( void )
 		spoof_count = (spoof_count + 1) % SPOOF_INTERVAL_T;
 		if( spoof_count == 0 )
 		{
-			for( uint8_t i = 0; i < num_pids; i++ )
+			for( uint8_t i = 0; i < DD_MAX_PIDS; i++ )
 			{
-				if((stream[i].num_activated > 0) & (stream[i].acquisition_type != PID_ASSIGNED_TO_VEHICLE_DATA))
+				if((stream[i].pid_uuid != PID_UNASSIGNED) &&
+				   (stream[i].num_activated > 0) &&
+				   (stream[i].acquisition_type != PID_ASSIGNED_TO_VEHICLE_DATA))
 				{
 					float spoof_value = stream[i].pid_value;
 					float lower_limit = stream[i].lower_limit;
