@@ -142,6 +142,9 @@ static uint32_t ke_uart_count = 0;
 
 #define SPOOF_INTERVAL_T      25 // ms
 static uint32_t spoof_count = 0;
+static volatile bool spoof_update_pending = false;
+static volatile uint32_t digitaldash_uptime_ms = 0;
+
 
 /* Application callbacks */
 #if SD_CARD_ACTIVE
@@ -1022,10 +1025,47 @@ static void default_config(void)
 }
 #endif
 
+static void service_spoof_data(void)
+{
+	if (!spoof_update_pending)
+		return;
+
+	/* digitaldash_tick() runs in the TIM17 ISR. Consume the request here so
+	 * stream[] cannot be changed concurrently with UI stream teardown/rebuild. */
+	spoof_update_pending = false;
+
+	for (uint8_t i = 0; i < DD_MAX_PIDS; i++)
+	{
+		if ((stream[i].pid_uuid != PID_UNASSIGNED) &&
+			(stream[i].num_activated > 0) &&
+			(stream[i].acquisition_type != PID_ASSIGNED_TO_VEHICLE_DATA))
+		{
+			float spoof_value = stream[i].pid_value;
+			float lower_limit = stream[i].lower_limit;
+			float upper_limit = stream[i].upper_limit;
+
+			convert_units(stream[i].pid_unit, stream[i].base_unit, &spoof_value);
+			convert_units(stream[i].pid_unit, stream[i].base_unit, &lower_limit);
+			convert_units(stream[i].pid_unit, stream[i].base_unit, &upper_limit);
+
+			spoof_value += ((upper_limit - lower_limit) / (100 + (i * 3)));
+
+			if (spoof_value > upper_limit)
+				spoof_value = lower_limit;
+			else if (spoof_value < lower_limit)
+				spoof_value = lower_limit;
+
+			update_pid_data(&stream[i], spoof_value, stream[i].timestamp + 1);
+		}
+	}
+}
+
 DIGITALDASH_STATUS digitaldash_service( void )
 {
     if( digitaldash_get_flag( DD_FLG_INIT ) == DD_INITIALIZED )
     {
+		service_spoof_data();
+
         /* If a delay was requested by the Digital Dash application, block all other functions *
          * until the delay is complete. This will NOT block any other application code         */
         if( digitaldash_delay > 0 ) {
@@ -1183,40 +1223,13 @@ DIGITALDASH_STATUS digitaldash_service( void )
 
 void digitaldash_tick( void )
 {
+	digitaldash_uptime_ms++;
+
 	if( spoof_data )
 	{
 		spoof_count = (spoof_count + 1) % SPOOF_INTERVAL_T;
 		if( spoof_count == 0 )
-		{
-			for( uint8_t i = 0; i < DD_MAX_PIDS; i++ )
-			{
-				if((stream[i].pid_uuid != PID_UNASSIGNED) &&
-				   (stream[i].num_activated > 0) &&
-				   (stream[i].acquisition_type != PID_ASSIGNED_TO_VEHICLE_DATA))
-				{
-					float spoof_value = stream[i].pid_value;
-					float lower_limit = stream[i].lower_limit;
-					float upper_limit = stream[i].upper_limit;
-
-					// Convert the values to the PID units for easier manipulation
-					convert_units( stream[i].pid_unit, stream[i].base_unit, &spoof_value );
-					convert_units( stream[i].pid_unit, stream[i].base_unit, &lower_limit );
-					convert_units( stream[i].pid_unit, stream[i].base_unit, &upper_limit );
-
-					// Increment the spoof value by a small amount, scaled to the range of 
-					// the PID and the index to create some variability between PIDs
-					spoof_value += ((upper_limit - lower_limit)/(100+(i*3)));
-
-					// Wrap the value around if it exceeds limits
-					if( spoof_value > upper_limit )
-						spoof_value = lower_limit;
-					else if( spoof_value < lower_limit )
-						spoof_value = lower_limit;
-
-					update_pid_data(&stream[i], spoof_value, stream[i].timestamp + 1);
-				}
-			}
-		}
+			spoof_update_pending = true;
 	}
 
     if( digitaldash_delay > 0 ) {
