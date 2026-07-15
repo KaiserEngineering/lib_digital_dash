@@ -336,6 +336,9 @@ uint8_t digitaldash_get_flag( DIGITALDASH_FLAG flag );
 
 void digitaldash_tick( void );
 
+uint32_t DigitalDash_Get_PID_Refresh_Period_ms( void );
+uint8_t DigitalDash_Get_PID_Refresh_Count( void );
+
 void DigitalDash_Add_CAN_Packet( uint16_t id, uint8_t* data );
 
 void DigitalDash_Add_UART_byte( uint8_t byte );

@@ -145,6 +145,12 @@ static uint32_t spoof_count = 0;
 static volatile bool spoof_update_pending = false;
 static volatile uint32_t digitaldash_uptime_ms = 0;
 
+static uint32_t refresh_cycle_start_ms = 0;
+static uint32_t refresh_cycle_timestamp[DD_MAX_PIDS] = {0};
+static uint32_t refresh_cycle_uuid[DD_MAX_PIDS] = {0};
+static uint32_t pid_refresh_period_ms = 0;
+static uint8_t pid_refresh_count = 0;
+static bool refresh_cycle_initialized = false;
 
 /* Application callbacks */
 #if SD_CARD_ACTIVE
@@ -1060,6 +1066,76 @@ static void service_spoof_data(void)
 	}
 }
 
+static void start_pid_refresh_cycle(uint32_t now)
+{
+	pid_refresh_count = 0;
+
+	for (uint8_t i = 0; i < DD_MAX_PIDS; i++)
+	{
+		if ((stream[i].pid_uuid != PID_UNASSIGNED) && (stream[i].num_activated > 0))
+		{
+			refresh_cycle_uuid[i] = stream[i].pid_uuid;
+			refresh_cycle_timestamp[i] = stream[i].timestamp;
+			pid_refresh_count++;
+		}
+		else
+		{
+			refresh_cycle_uuid[i] = PID_UNASSIGNED;
+			refresh_cycle_timestamp[i] = 0;
+		}
+	}
+
+	refresh_cycle_start_ms = now;
+	refresh_cycle_initialized = (pid_refresh_count > 0);
+}
+
+static void service_pid_refresh_rate(void)
+{
+	const uint32_t now = digitaldash_uptime_ms;
+	bool all_updated = true;
+
+	if (!refresh_cycle_initialized)
+	{
+		start_pid_refresh_cycle(now);
+		return;
+	}
+
+	for (uint8_t i = 0; i < DD_MAX_PIDS; i++)
+	{
+		const bool active = (stream[i].pid_uuid != PID_UNASSIGNED) &&
+			(stream[i].num_activated > 0);
+
+		/* A rebuild or view change changed the collection set. Start a new
+		 * measurement instead of mixing two different PID groups. */
+		if (active != (refresh_cycle_uuid[i] != PID_UNASSIGNED) ||
+			(active && (stream[i].pid_uuid != refresh_cycle_uuid[i])))
+		{
+			pid_refresh_period_ms = 0;
+			start_pid_refresh_cycle(now);
+			return;
+		}
+
+		if (active && (stream[i].timestamp == refresh_cycle_timestamp[i]))
+			all_updated = false;
+	}
+
+	if (all_updated)
+	{
+		pid_refresh_period_ms = now - refresh_cycle_start_ms;
+		start_pid_refresh_cycle(now);
+	}
+}
+
+uint32_t DigitalDash_Get_PID_Refresh_Period_ms(void)
+{
+	return pid_refresh_period_ms;
+}
+
+uint8_t DigitalDash_Get_PID_Refresh_Count(void)
+{
+	return pid_refresh_count;
+}
+
 DIGITALDASH_STATUS digitaldash_service( void )
 {
     if( digitaldash_get_flag( DD_FLG_INIT ) == DD_INITIALIZED )
@@ -1203,6 +1279,8 @@ DIGITALDASH_STATUS digitaldash_service( void )
 			Update_LCD_Brightness( LCD_MAX_BRIGHTNESS );
 			#endif
         }
+
+		service_pid_refresh_rate();
 
 		#if ENABLE_WHEN_ENGINE_ON
         if( (engine_speed->pid_value >= 500) )
