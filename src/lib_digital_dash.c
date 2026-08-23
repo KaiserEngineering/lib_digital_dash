@@ -1066,13 +1066,20 @@ static void service_spoof_data(void)
 	}
 }
 
+static bool pid_is_refresh_tracked(const PID_DATA *pid)
+{
+	return (pid->pid_uuid != PID_UNASSIGNED) &&
+		(pid->num_activated > 0) &&
+		(BITCHECK(pid->devices, DD_DEV_SYSTEM) == 0);
+}
+
 static void start_pid_refresh_cycle(uint32_t now)
 {
 	pid_refresh_count = 0;
 
 	for (uint8_t i = 0; i < DD_MAX_PIDS; i++)
 	{
-		if ((stream[i].pid_uuid != PID_UNASSIGNED) && (stream[i].num_activated > 0))
+		if (pid_is_refresh_tracked(&stream[i]))
 		{
 			refresh_cycle_uuid[i] = stream[i].pid_uuid;
 			refresh_cycle_timestamp[i] = stream[i].timestamp;
@@ -1102,8 +1109,7 @@ static void service_pid_refresh_rate(void)
 
 	for (uint8_t i = 0; i < DD_MAX_PIDS; i++)
 	{
-		const bool active = (stream[i].pid_uuid != PID_UNASSIGNED) &&
-			(stream[i].num_activated > 0);
+		const bool active = pid_is_refresh_tracked(&stream[i]);
 
 		/* A rebuild or view change changed the collection set. Start a new
 		 * measurement instead of mixing two different PID groups. */
